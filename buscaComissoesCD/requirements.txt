@@ -1,0 +1,19 @@
+# --- Interface Web (Dash) ---
+dash
+dash_bootstrap_components
+
+# --- Manipulação de Dados (Pandas) ---
+pandas
+xlsxwriter         # Usado para exportar para .xlsx
+# openpyxl         # Opcional, provavelmente não utilizado neste código
+
+# --- Agendamento de Tarefas ---
+APScheduler
+
+# --- Servidor Web e Chamadas HTTP ---
+flask
+requests
+urllib3            # Adicionado pois é importado diretamente para a lógica de Retry
+
+# --- SDK de Cloud (Huawei OBS) ---
+esdk-obs-python

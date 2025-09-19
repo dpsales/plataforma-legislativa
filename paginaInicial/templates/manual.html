@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Sobre a Plataforma{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center mb-5">Sobre a Plataforma</h1>
+    <div class="content">
+        {{ manual_conteudo | safe }}
+    </div>
+</div>
+{% endblock %}

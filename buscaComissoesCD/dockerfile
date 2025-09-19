@@ -1,0 +1,16 @@
+# Use a imagem base do Python
+FROM python:3.11-slim
+
+# Define o diretório de trabalho DENTRO da imagem
+WORKDIR /app
+
+# Copia os arquivos de requisitos (se tiver)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copia todo o seu código-fonte para o diretório /app
+COPY . .
+
+# Comando que será executado quando o container iniciar
+# ATENÇÃO: Substitua 'seu_script.py' pelo nome real do seu arquivo principal
+CMD ["python", "buscaComissoesCD13.py"]

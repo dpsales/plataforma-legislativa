@@ -1,0 +1,15 @@
+Flask
+Flask-SQLAlchemy
+psycopg2-binary
+Flask-SocketIO
+dash
+dash-bootstrap-components
+pandas
+xlsxwriter
+requests
+pdfplumber
+openpyxl
+python-docx
+psycopg2-binary
+
+

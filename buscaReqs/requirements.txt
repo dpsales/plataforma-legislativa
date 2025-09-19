@@ -1,0 +1,15 @@
+APScheduler
+dash
+dash_bootstrap_components
+python-docx
+Flask
+pandas
+Requests
+openpyxl
+xlsxwriter
+pytz
+google-cloud-storage
+PyPDF2
+sqlalchemy
+psycopg2-binary
+gunicorn

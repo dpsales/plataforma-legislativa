@@ -1,0 +1,172 @@
+/* ====================== */
+/* Layout Global          */
+/* ====================== */
+
+/* Define a fonte global e compensa a navbar fixa */
+body {
+    font-family: Verdana, sans-serif;
+    background-color: #FFFFFF;
+    color: #000000;
+    margin: 0;
+    padding: 0;
+    padding-top: 80px; /* Compensa a altura da navbar fixa */
+}
+
+/* ====================== */
+/* Cabeçalho              */
+/* ====================== */
+header {
+    width: 100%;
+    overflow: hidden;
+    margin-bottom: 20px;
+    position: relative; /* Necessário para posicionamento relativo de elementos internos */
+}
+
+.header-image {
+    max-width: 100%;
+    height: auto;
+    max-height: 150px; /* Ajuste conforme necessário */
+    object-fit: contain;
+}
+
+/* ====================== */
+/* Cartões (Botões)       */
+/* ====================== */
+
+/* Estilo base para os cartões */
+.card.clickable-card {
+    height: 250px !important;  /* Força altura fixa */
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #D3D3D3;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.card.clickable-card .card-body {
+    flex: 1;       /* Faz o conteúdo ocupar toda a altura do card */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 15px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.card.clickable-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* ====================== */
+/* Cores Customizadas     */
+/* ====================== */
+
+/* Para aplicações ativas (não em construção) */
+.card.active-app {
+    background-color: #f0f0f0 !important; /* Cinza bem claro */
+    color: #000000 !important;
+}
+
+/* Para aplicações em construção */
+.card.in-construction-app {
+    background-color: #ffffff !important; /* Fundo branco */
+    color: #000000 !important;
+    border: 2px dashed #ccc; /* Borda tracejada para destacar */
+}
+
+/* ====================== */
+/* Paleta de Cores        */
+/* ====================== */
+.bg-blue {
+    background-color: #183EFF !important;
+}
+
+.bg-green {
+    background-color: #00D000 !important;
+}
+
+.bg-yellow {
+    background-color: #FFD000 !important;
+}
+
+.bg-red {
+    background-color: #FF0000 !important;
+}
+
+/* ====================== */
+/* Títulos e Textos       */
+/* ====================== */
+h1 {
+    font-size: 2.5rem;
+    color: #000000;
+}
+
+.card-title {
+    font-size: 1.1rem;
+    color: #000000;
+    margin-top: 10px;
+}
+
+/* ====================== */
+/* Container Principal    */
+/* ====================== */
+.container {
+    width: 100%;
+    max-width: 1280px;
+    background-color: #FFFFFF;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* ====================== */
+/* Responsividade         */
+/* ====================== */
+
+/* Para telas até 1280px */
+@media (max-width: 1280px) {
+    .container {
+        max-width: 100%;
+    }
+}
+
+/* Para telas pequenas (celulares) até 576px */
+@media (max-width: 576px) {
+    h1 {
+        font-size: 2rem;
+    }
+
+    .card-title {
+        font-size: 1rem;
+        margin-top: 8px;
+    }
+
+    .header-image {
+        max-height: 120px;
+    }
+
+    /* Se desejar reduzir a altura dos cards em telas muito pequenas, descomente a linha abaixo:
+    .card.clickable-card {
+        height: 200px !important;
+    }
+    */
+
+    .card.clickable-card .card-body {
+        padding: 10px;
+    }
+
+    .fa-folder-open {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+    }
+}

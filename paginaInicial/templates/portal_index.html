@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}MPO no Congresso{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div id="grid-menu">
+        <h1 class="text-center mb-5">MPO no Congresso</h1>
+        <div class="row align-items-stretch">
+            {% for pagina in paginas %}
+            <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2 mb-4">
+                {% if pagina.url %}
+                    {% if pagina.titulo == "Informativo MPO no Congresso" %}
+                        <!-- Abre em nova aba para o informativo -->
+                        <a href="{{ pagina.url }}" target="_blank" class="text-decoration-none">
+                            <div class="card clickable-card active-app">
+                                <div class="card-body">
+                                    <i class="fa-solid fa-folder-open fa-2x mb-2"></i>
+                                    <h5 class="card-title">{{ pagina.titulo }}</h5>
+                                </div>
+                            </div>
+                        </a>
+                    {% else %}
+                        <!-- Carrega a aplicação no iframe -->
+                        <a href="{{ pagina.url }}" onclick="loadIframe('{{ pagina.url }}'); return false;" class="text-decoration-none">
+                            <div class="card clickable-card active-app">
+                                <div class="card-body">
+                                    <i class="fa-solid fa-folder-open fa-2x mb-2"></i>
+                                    <h5 class="card-title">{{ pagina.titulo }}</h5>
+                                </div>
+                            </div>
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <div class="card clickable-card in-construction-app">
+                        <div class="card-body">
+                            <i class="fa-solid fa-folder-open fa-2x mb-2"></i>
+                            <h5 class="card-title">{{ pagina.titulo }}<br>(Em construção)</h5>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="iframe-container" class="container-fluid" style="display: none;">
+        <button class="btn btn-secondary mb-3" onclick="showGrid()">Voltar</button>
+        <iframe id="content-frame" src="" style="width: 100%; height: 80vh; border: none;"></iframe>
+    </div>
+</div>
+
+<script>
+   function loadIframe(url) {
+       document.getElementById('grid-menu').style.display = 'none';
+       document.getElementById('iframe-container').style.display = 'block';
+       document.getElementById('content-frame').src = url;
+   }
+   function showGrid() {
+       document.getElementById('iframe-container').style.display = 'none';
+       document.getElementById('grid-menu').style.display = 'block';
+       document.getElementById('content-frame').src = "";
+   }
+   function loadPage(page) {
+       const urls = {
+           "default": "",
+           "manual": "/manual",
+           "documentacao": "/documentacao"
+       };
+       if(page === "default"){
+          showGrid();
+       } else if(urls[page]){
+          loadIframe(urls[page]);
+       }
+   }
+</script>
+{% endblock %}

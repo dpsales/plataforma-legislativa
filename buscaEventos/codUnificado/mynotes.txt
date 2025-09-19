@@ -1,0 +1,44 @@
+gcloud run deploy busca-eventos-2 \
+  --image gcr.io/aspar/busca-eventos-2 \
+  --platform managed \
+  --region southamerica-east1 \
+  --add-cloudsql-instances "aspar-429519:southamerica-east1:aspar" \
+  --min-instances 1 \
+  --allow-unauthenticated
+
+gcloud run deploy busca-eventos-2 --image gcr.io/aspar-429519/busca-eventos-2 --platform managed --region southamerica-east1 --add-cloudsql-instances "aspar-429519:southamerica-east1:aspar" --min-instances 0 --allow-unauthenticated
+
+Criar e enviar a imagem
+docker build -t busca-eventos-2 .
+docker tag busca-eventos-2 gcr.io/aspar-429519/busca-eventos-2
+docker push gcr.io/aspar-429519/busca-eventos-2
+
+
+Nomes das colunas
+antes:
+tabela_columns = [
+    "Comissão/Plenário",
+    "Data",
+    "Hora",
+    "Link Comissão/Plenário",
+    "PL",
+    "Ementa",
+    "Autor/Partido",
+    "Link PL",
+    "Incluir no REL?(X)",
+    "Motivo da Seleção"
+]
+
+novo:
+
+nomeComissaoPlenario
+dataEvento
+horaEvento
+linkComissaoPlenario
+proposicao
+ementa
+autorPartidoUf
+linkInteiroTeor
+impactoFiscal
+tipoImpactoFiscal
+dispositivoImpacto
