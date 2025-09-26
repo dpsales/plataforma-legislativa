@@ -11,8 +11,10 @@ import httpx
 
 app = FastAPI()
 
+secret_key = os.environ.get("SECRET_KEY", "SUA_CHAVE_SECRETA_AQUI")
+
 # Adiciona o middleware de sessões (necessário para autenticação)
-app.add_middleware(SessionMiddleware, secret_key="SUA_CHAVE_SECRETA_AQUI")
+app.add_middleware(SessionMiddleware, secret_key=secret_key)
 
 # Obtém o diretório base onde main.py está localizado
 BASE_DIR = Path(__file__).resolve().parent
@@ -43,10 +45,9 @@ def decode_url(encoded: str) -> str:
 
 valid_users = {
     #gabinete
-    
+    "daianapaulasales@gmail.com": {"token": "12345", "profile": "admin"},
+    "cmota.dev@gmail.com": {"token": "12345", "profile": "admin"},
     #secretarias
-    
-
 }
 
 # Lista das páginas (dados reais)

@@ -41,9 +41,9 @@ logger.setLevel(logging.DEBUG)
 
 LOCAL_MODE = True   # True = teste local | False = produção (GCS)
 
-BUCKET_NAME      = "aspar-429519_cloudbuild"
-GCS_OBJECT_NAME  = "reqs/resultados_filtrados_expressa.xlsx"
-LOCAL_OUTPUT_FILE = "resultados_filtrados_expressa.xlsx"
+BUCKET_NAME      = "data"
+GCS_OBJECT_NAME  = "resultados_filtrados_expressa.xlsx"
+LOCAL_OUTPUT_FILE = "data/resultados_filtrados_expressa.xlsx"
 
 scheduler_global = None
 

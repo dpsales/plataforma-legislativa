@@ -41,9 +41,9 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------
 # Constantes gerais
 # ---------------------------------------------------------------------
-BUCKET_NAME = os.getenv("BUCKET_NAME", "aspar-429519_cloudbuild")
-GCS_PATH    = "basepl/proposicoes_unificadas.xlsx"
-TMP_DIR     = os.getenv("TMP_DIR", "/tmp")
+BUCKET_NAME = os.getenv("BUCKET_NAME", "data")
+GCS_PATH    = "proposicoes_unificadas.xlsx"
+TMP_DIR     = os.getenv("TMP_DIR", "data")
 LOCAL_FILE  = os.path.join(TMP_DIR, "proposicoes_unificadas.xlsx")
 TZ = ZoneInfo("America/Sao_Paulo")   # 🟢 fuso oficial de Brasília
 

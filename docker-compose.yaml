@@ -1,0 +1,67 @@
+version: '3.8'
+services:
+  revProxy:
+    image: docker.io/nginxinc/nginx-unprivileged:1.25.2
+    ports:
+      - "8080:8080"
+    environment:
+      SECRET_KEY: "123456"
+    volumes:
+      - ./revProxy/conf/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - paginaInicial
+
+  paginaInicial:
+    build: 
+      context: ./paginaInicial
+      dockerfile: Dockerfile
+    image: gcr.io/nome-do-repo/pagina-inicial:latest
+
+  buscaReqs:
+    build: 
+      context: ./buscaReqs
+      dockerfile: Dockerfile
+    image: gcr.io/nome-do-repo/busca-reqs:latest
+
+  buscaMaterialSenado:
+    build: 
+      context: ./buscaMateriasSenado
+      dockerfile: Dockerfile
+    image: gcr.io/nome-do-repo/busca-materias-senado:latest
+
+  buscaEventos:
+    build: 
+      context: ./buscaEventos
+      dockerfile: Dockerfile
+    image: gcr.io/nome-do-repo/busca-eventos:latest
+    volumes:
+      - ./buscaEventos/codUnificado/data:/app/data
+
+  sqlite-web:
+    image: coleifer/sqlite-web
+    ports:
+      - "8090:8080"
+    volumes:
+      - ./buscaEventos/codUnificado/data:/data
+    command: --read-only /data/agendaSemana.db
+
+  buscaComissoesSF:
+    build:
+      context: ./buscaComissoesSF
+      dockerfile: Dockerfile
+    image: gcr.io/nome-do-repo/busca-comissoes-sf:latest
+
+  buscaComissoesCD:
+    build:
+      context: ./buscaComissoesCD
+      dockerfile: Dockerfile
+    image: gcr.io/nome-do-repo/busca-comissoes-cd:latest
+
+  basePL:
+    build:
+      context: ./basePL
+      dockerfile: Dockerfile
+    image: gcr.io/nome-do-repo/base-pl:latest
+    depends_on:
+      - paginaInicial
+    

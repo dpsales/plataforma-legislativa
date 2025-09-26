@@ -1,0 +1,15 @@
+{
+    "daianapaulasales@gmail.com": {
+        "token": "12345", 
+        "profile": "normal"
+    },
+    "daiana.sales@gestao.gov.br": {
+        "token": "12345", 
+        "profile": "admin"
+    }, 
+    "daiana.sales@sgb.gov.br": {
+        "token": "12345", 
+        "profile": "normal"
+    } 
+
+}

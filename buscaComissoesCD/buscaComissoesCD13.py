@@ -51,10 +51,10 @@ def _truthy(env_value: Optional[str], default: bool = False) -> bool:
         return default
     return str(env_value).strip().lower() in {"1", "true", "yes", "y", "on"}
 
-BASE_DIR        = os.getenv("BASE_DIR", "/busca-comissoes-cd").rstrip("/")
+BASE_DIR        = os.getenv("BASE_DIR", "data").rstrip("/")
 os.makedirs(BASE_DIR, exist_ok=True)
 
-LOCAL_MODE      = _truthy(os.getenv("LOCAL_MODE"), False)  # False em produção
+LOCAL_MODE      = _truthy(os.getenv("LOCAL_MODE"), True)  # True em desenvolvimento
 
 # OBS (Huawei Cloud)
 OBS_BUCKET      = os.getenv("HCS_OBS_BUCKET", "aspar")
@@ -64,7 +64,7 @@ OBS_SK          = os.getenv("HCS_OBS_SK", "")
 OBS_TOKEN       = os.getenv("HCS_OBS_TOKEN")  # opcional (STS)
 
 # Objeto/caminho no bucket
-OBS_OBJECT_KEY  = "comissoes_cd/proposicoes_filtradas_cd.csv"
+OBS_OBJECT_KEY  = "proposicoes_filtradas_cd.csv"
 
 # Caminho local canonical (mantemos mesmo nome do arquivo)
 LOCAL_CSV_PATH  = os.path.join(BASE_DIR, "proposicoes_filtradas_cd.csv")

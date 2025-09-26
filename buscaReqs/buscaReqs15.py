@@ -51,9 +51,9 @@ LOCAL_MODE = str(os.getenv("LOCAL_MODE", "true")).lower() == "true"   # True = t
 USE_DB     = str(os.getenv("USE_DB", "false")).lower() == "true"      # Liga/desliga uso de banco
 
 # GCS (opcional)
-BUCKET_NAME       = os.getenv("BUCKET_NAME", "aspar-429519_cloudbuild")
-GCS_OBJECT_NAME   = os.getenv("GCS_OBJECT_NAME", "reqs/resultados_filtrados_expressa.xlsx")
-LOCAL_OUTPUT_FILE = os.getenv("LOCAL_OUTPUT_FILE", "resultados_filtrados_expressa.xlsx")
+BUCKET_NAME       = os.getenv("BUCKET_NAME", "data")
+GCS_OBJECT_NAME   = os.getenv("GCS_OBJECT_NAME", "resultados_filtrados_expressa.xlsx")
+LOCAL_OUTPUT_FILE = os.getenv("LOCAL_OUTPUT_FILE", "data/resultados_filtrados_expressa.xlsx")
 
 # DB URL (Postgres ou MySQL)
 DB_URL = os.getenv("DB_URL", "")  # Ex.: postgresql+psycopg2://usuario:senha@host:5432/db
