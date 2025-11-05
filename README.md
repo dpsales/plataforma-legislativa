@@ -270,14 +270,15 @@ kubectl get pods -n plataforma-legislativa
 
 ### **👥 Equipe Responsável**
 
-**[Nome da sua Equipe ou Organização]** **[Nome do seu Departamento ou Ministério]**
+**Gabin/SEGES/MGI**
 
-**Responsável Técnico**: [Seu Nome]
+**Responsável Técnico**: 
+
 
 **Equipe de Desenvolvimento**:
 
-  - [Nome do Desenvolvedor 1]
-  - [Nome do Desenvolvedor 2]
+  - Mario dos Santos M. Valverde Neto ASPAR/MPO
+  - Daiana de Paula Sales GABIN/SEGES/MGI
 
 ### **📧 Contatos**
 
