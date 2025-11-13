@@ -1,22 +1,32 @@
-# Use uma imagem Python leve
-FROM python:3.9-slim
+FROM mirror.gcr.io/library/python:3.11-slim
 
-# Defina o diretório de trabalho
-WORKDIR /buscaEventos
+ENV PYTHONUNBUFFERED=1 \
+	PYTHONDONTWRITEBYTECODE=1 \
+	DJANGO_SETTINGS_MODULE=busca_eventos.settings
 
-# Copie apenas os arquivos necessários
-# Se você tiver um requirements.txt com as dependências, copie-o primeiro
-COPY requirements.txt .
+WORKDIR /app
 
-# Instale as dependências
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends build-essential curl \
+	&& rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copie os arquivos da aplicação (por exemplo, app.py e o arquivo Excel)
-COPY paginaWeb6.py .
-COPY ControleSEAI_2025-06-02_a_2025-06-06.xlsx .
+COPY . .
 
-# Exponha a porta 8080 (usada pelo Cloud Run)
+ARG APP_UID=1000
+ARG APP_GID=1000
+RUN groupadd --gid "${APP_GID}" appuser \
+	&& useradd --uid "${APP_UID}" --gid "${APP_GID}" --create-home --shell /bin/bash appuser \
+	&& mkdir -p /app/staticfiles /app/data \
+	&& chown -R appuser:appuser /app
+
+ENV PATH="/app/scripts:${PATH}" \
+	GUNICORN_WORKERS=3
+
+RUN chmod +x /app/scripts/*.sh
+
 EXPOSE 8080
 
-# Comando para rodar a aplicação
-CMD ["python", "paginaWeb6.py"]
+CMD ["/app/scripts/start-web.sh"]

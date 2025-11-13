@@ -1,16 +1,28 @@
 {% extends "base.html" %}
 
-{% block title %}MPO no Congresso{% endblock %}
+{% block title %}Plataforma do Congresso{% endblock %}
 
 {% block content %}
 <div class="container-fluid mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <span class="fw-semibold">{{ user_email }}</span>
+            <span class="badge bg-secondary ms-2 text-uppercase">{{ profile_label }}</span>
+        </div>
+        <div class="btn-group">
+            {% if can_configure %}
+            <a href="{% url 'portal:configuracao' %}" class="btn btn-outline-primary">Configurações</a>
+            {% endif %}
+            <a href="{% url 'portal:logout' %}" class="btn btn-outline-secondary">Sair</a>
+        </div>
+    </div>
     <div id="grid-menu">
-        <h1 class="text-center mb-5">MPO no Congresso</h1>
+        <h1 class="text-center mb-5">Plataforma do Congresso</h1>
         <div class="row align-items-stretch">
             {% for pagina in paginas %}
             <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2 mb-4">
                 {% if pagina.url %}
-                    {% if pagina.titulo == "Informativo MPO no Congresso" %}
+                    {% if pagina.titulo == "Informativo do Congresso" %}
                         <!-- Abre em nova aba para o informativo -->
                         <a href="{{ pagina.url }}" target="_blank" class="text-decoration-none">
                             <div class="card clickable-card active-app">
@@ -22,7 +34,11 @@
                         </a>
                     {% else %}
                         <!-- Carrega a aplicação no iframe -->
-                        <a href="{{ pagina.url }}" onclick="loadIframe('{{ pagina.url }}'); return false;" class="text-decoration-none">
+                        {% if '?' in pagina.url %}
+                        <a href="{{ pagina.url }}&profile={{ user_profile }}" onclick="loadIframe('{{ pagina.url }}&profile={{ user_profile }}'); return false;" class="text-decoration-none">
+                        {% else %}
+                        <a href="{{ pagina.url }}?profile={{ user_profile }}" onclick="loadIframe('{{ pagina.url }}?profile={{ user_profile }}'); return false;" class="text-decoration-none">
+                        {% endif %}
                             <div class="card clickable-card active-app">
                                 <div class="card-body">
                                     <i class="fa-solid fa-folder-open fa-2x mb-2"></i>

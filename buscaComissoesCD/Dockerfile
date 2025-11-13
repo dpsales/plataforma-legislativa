@@ -1,0 +1,33 @@
+FROM mirror.gcr.io/library/python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    DJANGO_SETTINGS_MODULE=busca_comissoes_cd.settings
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential libpq-dev curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+ARG APP_UID=1000
+ARG APP_GID=1000
+RUN groupadd --gid "${APP_GID}" appuser \
+    && useradd --uid "${APP_UID}" --gid "${APP_GID}" --create-home --shell /bin/bash appuser \
+    && mkdir -p /app/staticfiles /app/data \
+    && chown -R appuser:appuser /app
+
+ENV PATH="/app/scripts:${PATH}" \
+    GUNICORN_WORKERS=3 \
+    RUN_INITIAL_FETCH=1
+
+RUN chmod +x /app/scripts/*.sh
+
+EXPOSE 8080
+
+CMD ["/app/scripts/start-web.sh"]

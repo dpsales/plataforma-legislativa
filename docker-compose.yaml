@@ -1,67 +1,197 @@
-version: '3.8'
+# version: "3.8"
+#
 services:
   revProxy:
-    image: docker.io/nginxinc/nginx-unprivileged:1.25.2
+    image: ghcr.io/nginxinc/nginx-unprivileged:1.25.2
     ports:
       - "8080:8080"
     environment:
-      SECRET_KEY: "123456"
+      SECRET_KEY: ${SECRET_KEY:-changeme}
     volumes:
       - ./revProxy/conf/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - paginaInicial
 
-  paginaInicial:
-    build: 
-      context: ./paginaInicial
-      dockerfile: Dockerfile
-    image: gcr.io/nome-do-repo/pagina-inicial:latest
-
-  buscaReqs:
-    build: 
-      context: ./buscaReqs
-      dockerfile: Dockerfile
-    image: gcr.io/nome-do-repo/busca-reqs:latest
-
-  buscaMaterialSenado:
-    build: 
-      context: ./buscaMateriasSenado
-      dockerfile: Dockerfile
-    image: gcr.io/nome-do-repo/busca-materias-senado:latest
-
-  buscaEventos:
-    build: 
-      context: ./buscaEventos
-      dockerfile: Dockerfile
-    image: gcr.io/nome-do-repo/busca-eventos:latest
-    volumes:
-      - ./buscaEventos/codUnificado/data:/app/data
-
-  sqlite-web:
-    image: coleifer/sqlite-web
+  redis:
+    image: mirror.gcr.io/library/redis:7-alpine
     ports:
-      - "8090:8080"
-    volumes:
-      - ./buscaEventos/codUnificado/data:/data
-    command: --read-only /data/agendaSemana.db
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
-  buscaComissoesSF:
-    build:
-      context: ./buscaComissoesSF
-      dockerfile: Dockerfile
-    image: gcr.io/nome-do-repo/busca-comissoes-sf:latest
-
-  buscaComissoesCD:
+  buscacomissoescd:
     build:
       context: ./buscaComissoesCD
       dockerfile: Dockerfile
-    image: gcr.io/nome-do-repo/busca-comissoes-cd:latest
+    image: gcr.io/plataforma-legislativa/busca-comissoes-cd:web
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - DJANGO_ALLOWED_HOSTS=*
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - DJANGO_USE_X_FORWARDED_HOST=true
+    volumes:
+      - ./buscaComissoesCD/database:/app/data
+    ports:
+      - "8011:8080"
 
-  basePL:
+  buscacomissoescd-worker:
+    image: gcr.io/plataforma-legislativa/busca-comissoes-cd:web
+    depends_on:
+      - buscacomissoescd
+      - redis
+    command: ["/app/scripts/start-worker.sh"]
+    environment:
+      - DJANGO_ALLOWED_HOSTS=*
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - DJANGO_USE_X_FORWARDED_HOST=true
+      - WAIT_FOR_MIGRATIONS=1
+    volumes:
+      - ./buscaComissoesCD/database:/app/data
+
+  buscacomissoessf:
+    build:
+      context: ./buscaComissoesSF
+      dockerfile: Dockerfile
+    image: gcr.io/plataforma-legislativa/busca-comissoes-sf:web
+    depends_on:
+      - redis
+    environment:
+      - DJANGO_ALLOWED_HOSTS=*
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - DJANGO_USE_X_FORWARDED_HOST=true
+      - CELERY_TASK_DEFAULT_QUEUE=busca_comissoes_sf
+      - DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:8080
+    volumes:
+      - ./buscaComissoesSF/database:/app/data
+    ports:
+      - "8012:8080"
+
+  buscacomissoessf-worker:
+    image: gcr.io/plataforma-legislativa/busca-comissoes-sf:web
+    depends_on:
+      - buscacomissoessf
+      - redis
+    command: ["/app/scripts/start-worker.sh"]
+    environment:
+      - DJANGO_ALLOWED_HOSTS=*
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - DJANGO_USE_X_FORWARDED_HOST=true
+      - CELERY_TASK_DEFAULT_QUEUE=busca_comissoes_sf
+      - WAIT_FOR_MIGRATIONS=1
+    volumes:
+      - ./buscaComissoesSF/database:/app/data
+
+  buscacomissoesmistas:
+    build:
+      context: ./buscaComissoesMistas
+      dockerfile: Dockerfile
+    image: busca-comissoes-mistas:web
+    depends_on:
+      - redis
+    environment:
+      - DJANGO_ALLOWED_HOSTS=*
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - DJANGO_USE_X_FORWARDED_HOST=true
+      - CELERY_TASK_DEFAULT_QUEUE=busca_comissoes_mistas
+      - DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:8080
+    volumes:
+      - ./buscaComissoesMistas/database:/app/data
+    ports:
+      - "8013:8080"
+
+  buscacomissoesmistas-worker:
+    image: busca-comissoes-mistas:web
+    depends_on:
+      - buscacomissoesmistas
+      - redis
+    command: ["/app/scripts/start-worker.sh"]
+    environment:
+      - DJANGO_ALLOWED_HOSTS=*
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - DJANGO_USE_X_FORWARDED_HOST=true
+      - CELERY_TASK_DEFAULT_QUEUE=busca_comissoes_mistas
+      - WAIT_FOR_MIGRATIONS=1
+    volumes:
+      - ./buscaComissoesMistas/database:/app/data
+
+  buscamaterias:
+    build:
+      context: ./buscaMaterias
+      dockerfile: dockerfile
+    image: gcr.io/plataforma-legislativa/busca-materias:web
+    environment:
+      - DJANGO_ALLOWED_HOSTS=*
+      - DJANGO_USE_X_FORWARDED_HOST=true
+      - DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:8080
+    volumes:
+      - ./database:/app/data
+      - ./buscaMaterias/proposicoes_ids.json:/app/proposicoes_ids.json:ro
+    ports:
+      - "8014:8080"
+
+  buscareqs:
+    build:
+      context: ./buscaReqs
+      dockerfile: Dockerfile
+    image: gcr.io/plataforma-legislativa/busca-reqs:web
+    environment:
+      - DJANGO_ALLOWED_HOSTS=*
+      - DJANGO_USE_X_FORWARDED_HOST=true
+      - DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:8080
+    volumes:
+      - ./database:/app/data
+    ports:
+      - "8015:8080"
+
+  basepl:
     build:
       context: ./basePL
       dockerfile: Dockerfile
-    image: gcr.io/nome-do-repo/base-pl:latest
-    depends_on:
-      - paginaInicial
-    
+    image: gcr.io/plataforma-legislativa/base-pl:web
+    environment:
+      - DJANGO_ALLOWED_HOSTS=*
+      - DJANGO_USE_X_FORWARDED_HOST=true
+      - DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:8080
+    volumes:
+      - ./database:/app/data
+    ports:
+      - "8016:8080"
+
+  buscaeventos:
+    build:
+      context: ./buscaEventos
+      dockerfile: dockerfile
+    image: gcr.io/plataforma-legislativa/busca-eventos:web
+    environment:
+      - DJANGO_ALLOWED_HOSTS=*
+      - DJANGO_USE_X_FORWARDED_HOST=true
+      - DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:8080
+    volumes:
+      - ./database:/app/data
+    ports:
+      - "8017:8080"
+
+  paginaInicial:
+    build:
+      context: ./paginaInicial
+      dockerfile: Dockerfile
+    image: gcr.io/plataforma-legislativa/pagina-inicial:latest
+    ports:
+      - "8000:8080"
+    environment:
+      - SECRET_KEY=${PAGINA_INICIAL_SECRET_KEY:-change-me}
+      - DEBUG=${PAGINA_INICIAL_DEBUG:-False}
+      - RUN_MIGRATIONS=${PAGINA_INICIAL_RUN_MIGRATIONS:-1}
+    volumes:
+      - ./database:/app/database

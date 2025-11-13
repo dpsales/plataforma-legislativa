@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+*.log
+.env
+.DS_Store
+
+buscaComissoesCD/data/*
+!buscaComissoesCD/data/.gitkeep
+buscaComissoesCD/staticfiles/

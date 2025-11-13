@@ -9,7 +9,7 @@ import sqlite3
 from pathlib import Path
 
 # ------------- CONFIGURÁVEL ---------------------------------------
-EXCEL_PATH = Path(r"C:\caminho\para\backup_pl.xlsx")   # <- AJUSTE AQUI
+EXCEL_PATH = Path(__file__).resolve().parent / "backup_pl.xlsx"   # <- AJUSTE AQUI
 
 # ---------------- infra do banco ----------------------------------
 BASE_DIR = Path(__file__).resolve().parent

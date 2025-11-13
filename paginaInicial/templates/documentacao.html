@@ -3,10 +3,59 @@
 {% block title %}Documentação{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="text-center mb-5">Documentação do Sistema</h1>
-    <div class="content">
-        {{ doc_conteudo | safe }}
-    </div>
+<div class="container py-4">
+    <h1 class="text-center mb-5">Documentação da Plataforma Legislativa</h1>
+
+    <section class="mb-5">
+        <h2 class="h4">Visao Geral</h2>
+        <p>Esta pagina resume o conteudo do Manual da Plataforma e detalha o funcionamento dos principais atalhos disponiveis no portal. Utilize este documento para revisar responsabilidades, fluxos de acesso e servicos relacionados aos dados legislativos monitorados.</p>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Navegacao do Portal</h2>
+        <ul>
+            <li><strong>Menu Superior:</strong> Disponibiliza links para a pagina inicial, o manual do usuario e esta documentacao tecnica.</li>
+            <li><strong>Login:</strong> Exige credenciais presentes em <code>paginaInicial/users/users.json</code>. O perfil carregado controla os cartoes exibidos.</li>
+            <li><strong>Pagina Inicial:</strong> Apresenta um grid com cartoes. Cada cartao redireciona para um microservico da suite Plataforma Legislativa.</li>
+        </ul>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Servicos Destacados</h2>
+        <ul>
+            <li><strong>Informativo do Congresso:</strong> Consulta proposicoes, votacoes e comunicados oficiais.</li>
+            <li><strong>Agenda da Semana:</strong> Lista eventos e proposicoes previstos para os proximos dias.</li>
+            <li><strong>Requerimentos:</strong> Exibe requerimentos registrados na Camara e no Senado com filtros por autor e status.</li>
+            <li><strong>Materias em Tramitacao (Senado):</strong> Mostra materias prontas para pauta no Senado Federal.</li>
+            <li><strong>Materias em Tramitacao (Camara):</strong> Destaca proposicoes que estao no fluxo da Camara dos Deputados.</li>
+            <li><strong>Materias Prioritarias:</strong> Reune proposicoes marcadas como criticas pela equipe.</li>
+            <li><strong>Busca Avancada em Proposicoes:</strong> Fornece filtros detalhados sobre o acervo da Camara.</li>
+        </ul>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Fluxo de Uso Sugerido</h2>
+        <ol>
+            <li>Acesse o portal via <code>http://localhost:8080</code> (ou a URL configurada) e realize o login.</li>
+            <li>Revise a Agenda da Semana para identificar eventos relevantes.</li>
+            <li>Consulte Requerimentos e Materias em Tramitacao para acompanhar detalhamentos legislativos.</li>
+            <li>Utilize a Busca Avancada para refinar analises por palavras-chave, autores ou situacao.</li>
+            <li>Retorne ao Manual e a Documentacao quando houver duvidas sobre navegacao ou escopo dos servicos.</li>
+        </ol>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Perfis e Configuracao</h2>
+        <p>Os perfis definidos em <code>settings.PROFILE_RULES</code> (por exemplo, <code>admin</code>, <code>normal</code> e <code>viewer</code>) determinam quais cartoes ficam visiveis e se o usuario pode acessar a pagina de configuracao. Garanta que cada colaborador use o perfil correto para preservar os limites de acesso.</p>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Duvidas Frequentes</h2>
+        <ul>
+            <li><strong>Como voltar ao manual?</strong> Utilize o menu ou acesse <code>/manual</code>.</li>
+            <li><strong>Onde ficam os dados persistidos?</strong> Cada microservico armazena seus dados em diretórios <code>data/</code> ou bancos configurados no <code>docker-compose.yaml</code>.</li>
+            <li><strong>Quem pode editar os links?</strong> Perfis com permissao de configuracao acessam a pagina <code>/configuracao</code> para atualizar rotas e rótulos.</li>
+        </ul>
+    </section>
 </div>
 {% endblock %}

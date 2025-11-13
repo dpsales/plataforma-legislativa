@@ -17,8 +17,9 @@ from docx.oxml.ns import qn
 # ----------------------------------------------------------
 # 1) Conexão e leitura do banco de dados
 # ----------------------------------------------------------
-SCRIPT_DIR = Path(__file__).resolve().parent          # .../buscaEventos
-DB_FILE    = (SCRIPT_DIR / "codUnificado" / "data" / "agendaSemana.db").resolve()
+# O caminho para o banco de dados agora é relativo ao diretório de dados do app,
+# que é montado a partir do volume 'database' no docker-compose.
+DB_FILE = Path("/app/data/plataforma.db").resolve()
 
 def get_conn() -> sqlite3.Connection:
     """Devolve uma conexão SQLite em modo autocommit."""

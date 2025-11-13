@@ -30,7 +30,7 @@ A aplicação principal, `codunif17.py`, é um painel de controle (dashboard) de
 
 *   **`requirements.txt`**: Lista as bibliotecas Python necessárias para que a aplicação funcione corretamente.
 
-*   **`Dockerfile`**: Arquivo de configuração que permite criar uma imagem Docker da aplicação, facilitando o deploy em ambientes de contêineres como o Google Cloud Run.
+*   **`Dockerfile`**: Arquivo de configuração que permite criar uma imagem Docker da aplicação, facilitando o deploy em ambientes de contêineres.
 
 *   **`mynotes.txt`**: Um arquivo de anotações do desenvolvedor, contendo exemplos de comandos `gcloud` para deploy e notas sobre a evolução do esquema de dados (nomes de colunas).
 

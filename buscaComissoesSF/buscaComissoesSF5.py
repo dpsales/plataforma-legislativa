@@ -48,8 +48,23 @@ def formatar_autor(autor_str):
     return "Autor não informado"
 
 
-def obter_dados_senado_comissoes():
-    comissoes_interesse = ["cae", "ccj"]
+def obter_lista_colegiados():
+    """Busca a lista de todos os colegiados (comissões, etc.) do Senado."""
+    url = "https://legis.senado.leg.br/dadosabertos/comissao/lista/colegiados"
+    headers = {"Accept": "application/json"}
+    try:
+        resp = requests.get(url, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+        colegiados = data.get("ListaColegiados", {}).get("Colegiados", {}).get("Colegiado", [])
+        # Extrai apenas o que é necessário (label e value) para o dropdown
+        return [{"label": f"{c['Sigla']} - {c['Nome']}", "value": c['Sigla']} for c in colegiados]
+    except (requests.exceptions.RequestException, ValueError) as e:
+        print(f"Erro ao buscar lista de colegiados: {e}")
+        return []
+
+def obter_dados_senado_comissoes(comissoes_interesse):
+    # comissoes_interesse = ["cae", "ccj"] # Removido para receber como argumento
     situacoes_desejadas_cc = ["PRONTPAUT", "PEDVISTA", "INPAUTA"]
     todas_materias = []
 
@@ -79,28 +94,29 @@ def obter_dados_senado_comissoes():
                         "Comissão": sigla_c
                     })
 
-    # Plenário
-    json_data_plenario = buscar_materias_comissao("plen", situacao="PRONDEPLEN")
-    if json_data_plenario:
-        lista = (json_data_plenario.get("ListaMateriasEmComissao", {})
-                                 .get("Comissoes", {})
-                                 .get("Comissao", []))
-        for com_info in lista:
-            sigla_c = com_info.get("Sigla", "")
-            materias = (com_info.get("Materias", {})
+    # Plenário (adicionado separadamente se 'PLEN' for selecionado)
+    if "PLEN" in comissoes_interesse:
+        json_data_plenario = buscar_materias_comissao("plen", situacao="PRONDEPLEN")
+        if json_data_plenario:
+            lista = (json_data_plenario.get("ListaMateriasEmComissao", {})
+                                     .get("Comissoes", {})
+                                     .get("Comissao", []))
+            for com_info in lista:
+                sigla_c = com_info.get("Sigla", "")
+                materias = (com_info.get("Materias", {})
                               .get("Materia", []))
-            for mat in materias:
-                todas_materias.append({
-                    "Codigo": mat.get("Codigo", ""),
-                    "Sigla": mat.get("Sigla", ""),
-                    "Numero": mat.get("Numero", ""),
-                    "Ano": mat.get("Ano", ""),
-                    "Ementa": mat.get("Ementa", ""),
-                    "Autor": formatar_autor(mat.get("Autor", "")),
-                    "SiglaSituacao": mat.get("SituacaoAtualProcesso", {}).get("SiglaSituacao", ""),
-                    "Situação": mat.get("SituacaoAtualProcesso", {}).get("DescricaoSituacao", ""),
-                    "Comissão": sigla_c
-                })
+                for mat in materias:
+                    todas_materias.append({
+                        "Codigo": mat.get("Codigo", ""),
+                        "Sigla": mat.get("Sigla", ""),
+                        "Numero": mat.get("Numero", ""),
+                        "Ano": mat.get("Ano", ""),
+                        "Ementa": mat.get("Ementa", ""),
+                        "Autor": formatar_autor(mat.get("Autor", "")),
+                        "SiglaSituacao": mat.get("SituacaoAtualProcesso", {}).get("SiglaSituacao", ""),
+                        "Situação": mat.get("SituacaoAtualProcesso", {}).get("DescricaoSituacao", ""),
+                        "Comissão": sigla_c
+                    })
 
     df = pd.DataFrame(todas_materias)
     df["Possível impacto fiscal"] = ""
@@ -210,7 +226,7 @@ def filtrar_materias(df):
 ###############################################################################
 # 4. CRIAR APLICAÇÃO DASH COM MENSAGEM DE ATUALIZAÇÃO E CABEÇALHO FIXO
 ###############################################################################
-def criar_app_dash(df_inicial):
+def criar_app_dash(lista_colegiados):
     # Timestamp de quando a busca foi executada
     agora = datetime.datetime.now(ZoneInfo("America/Sao_Paulo"))
     hora_atualizacao = f"Dados atualizados em {agora.strftime('%d/%m/%Y')} às {agora.strftime('%H:%M')}"
@@ -228,11 +244,11 @@ def criar_app_dash(df_inicial):
     # Corrige scheme/host quando há proxy (Ingress/NAT/ELB)
     server.wsgi_app = ProxyFix(server.wsgi_app, x_proto=1, x_host=1)
 
-    # Garante link de ficha
-    if "Ficha de Tramitação" not in df_inicial.columns:
-        df_inicial["Ficha de Tramitação"] = df_inicial["Codigo"].apply(
-            lambda cod: f"[🔎 Ficha](https://www25.senado.leg.br/web/atividade/materias/-/materia/{cod})"
-        )
+    # DataFrame inicial vazio
+    df_inicial = pd.DataFrame(columns=[
+        "Codigo", "Título", "Autor", "Ementa", "DataSituacaoRecente",
+        "TextosAssociados", "Ficha de Tramitação", "Situação", "Comissão"
+    ])
 
     colunas_tabela = [
         {"name": "Proposição", "id": "Título"},
@@ -243,80 +259,129 @@ def criar_app_dash(df_inicial):
         {"name": "Ficha de Tramitação","id": "Ficha de Tramitação","presentation": "markdown"}
     ]
 
-    # Checklist de comissões
-    com_counts = df_inicial["Comissão"].value_counts().to_dict()
-    opts_com = [{"label": f"{c}: {com_counts[c]}", "value": c} for c in sorted(com_counts)]
-
-    # Checklist de situações com capitalização
-    uniq_sit = sorted(s for s in df_inicial["Situação"].unique() if isinstance(s, str) and s.strip())
-    opts_sit = [{"label": s[0].upper() + s[1:].lower(), "value": s} for s in uniq_sit]
-
     app.layout = dbc.Container([
         html.H1("Proposições Tramitando em Comissões do Senado",
-                style={"color": "#183EFF", "fontFamily": "Verdana"}),
+                style={"color": "#0a2242", "fontFamily": "Verdana"}),
         html.Hr(),
-        # Mensagem de atualização e origem dos dados
-        html.Div([
-            html.Div(hora_atualizacao),
+        html.Div(id="mensagem-atualizacao", style={"textAlign": "right", "fontStyle": "italic", "fontSize": "11px", "marginBottom": "10px"}),
+
+        dbc.Row([
+            dbc.Col(dcc.Dropdown(
+                id='dropdown-comissoes',
+                options=lista_colegiados,
+                value=['CAE', 'CCJ', 'CTFC', 'CMO', 'CCDD', 'CAS'],  # Valores iniciais
+                multi=True,
+                placeholder="Selecione as comissões..."
+            ), width=9),
+            dbc.Col(dbc.Button("Buscar Matérias", id='btn-buscar', n_clicks=0, color="primary"), width=3),
+        ]),
+        html.Br(),
+        dcc.Loading(id="loading-spinner", children=[
+            dbc.Button("Exportar XLSX", id="btn-exportar", color="secondary", style={"display": "none"}),
+            dcc.Download(id="download-xlsx"),
+            html.Br(),
+            dcc.Checklist(
+                id="checklist_comissoes",
+                labelStyle={"display": "inline-block", "margin-right": "15px", "fontFamily": "Verdana"},
+                inputStyle={"margin-right": "5px"}
+            ),
+            html.Br(),
+            dcc.Checklist(
+                id="checklist_situacoes",
+                labelStyle={"display": "inline-block", "margin-right": "15px", "fontFamily": "Verdana"},
+                inputStyle={"margin-right": "5px"}
+            ),
+            html.Br(),
+            dash_table.DataTable(
+                id="tabela_proposicoes",
+                columns=colunas_tabela,
+                data=[], # Começa sem dados
+                filter_action="native",
+                sort_action="native",
+                sort_mode="multi",
+                page_action="none",
+                fixed_rows={"headers": True},
+                style_table={"overflowX": "visible", "maxHeight": "600px", "overflowY": "auto"},
+                style_cell={
+                    "whiteSpace": "pre-line", "height": "auto", "textAlign": "left",
+                    "padding": "5px", "fontFamily": "Verdana", "fontSize": "14px", "color": "#000000"
+                },
+                style_cell_conditional=[
+                    {"if": {"column_id": "Título"},             "width": "100px"},
+                    {"if": {"column_id": "Autor"},               "width": "150px"},
+                    {"if": {"column_id": "Ementa"},              "width": "400px"},
+                    {"if": {"column_id": "DataSituacaoRecente"}, "width": "150px"},
+                    {"if": {"column_id": "TextosAssociados"},    "width": "250px"},
+                    {"if": {"column_id": "Ficha de Tramitação"}, "width": "100px"},
+                ],
+                style_header={"backgroundColor": "#0023b3", "fontWeight": "bold",
+                              "color": "#FFFFFF", "fontFamily": "Verdana"},
+                style_data_conditional=[{"if": {"row_index": "even"}, "backgroundColor": "#F2F2F2"}],
+            )
+        ], type="circle"),
+        dcc.Store(id='dados-completos-store', data=df_inicial.to_dict('records'))
+], fluid=True, style={"backgroundColor": "#FFFFFF", "color": "#000000", "fontFamily": "Verdana", "padding": "20px"})
+
+    @app.callback(
+        [Output('dados-completos-store', 'data'),
+         Output('checklist_comissoes', 'options'),
+         Output('checklist_comissoes', 'value'),
+         Output('checklist_situacoes', 'options'),
+         Output('checklist_situacoes', 'value'),
+         Output('mensagem-atualizacao', 'children'),
+         Output('btn-exportar', 'style')],
+        [Input('btn-buscar', 'n_clicks')],
+        [State('dropdown-comissoes', 'value')],
+        prevent_initial_call=True
+    )
+    def buscar_dados(n_clicks, comissoes_selecionadas):
+        if not n_clicks or not comissoes_selecionadas:
+            raise dash.exceptions.PreventUpdate
+
+        df_senado = obter_dados_senado_comissoes(comissoes_selecionadas)
+        df_filtrado = filtrar_materias(df_senado)
+        
+        if df_filtrado.empty:
+            df_final = pd.DataFrame(columns=df_inicial.columns)
+            opts_com, val_com, opts_sit, val_sit = [], [], [], []
+        else:
+            df_final = agregar_detalhes(df_filtrado)
+            if "Situação" not in df_final.columns: df_final["Situação"] = ""
+            if "Comissão" not in df_final.columns: df_final["Comissão"] = ""
+            df_final["Ficha de Tramitação"] = df_final["Codigo"].apply(
+                lambda cod: f"[🔎 Ficha](https://www25.senado.leg.br/web/atividade/materias/-/materia/{cod})"
+            )
+            
+            com_counts = df_final["Comissão"].value_counts().to_dict()
+            opts_com = [{"label": f"{c}: {com_counts[c]}", "value": c} for c in sorted(com_counts)]
+            val_com = [o["value"] for o in opts_com]
+
+            uniq_sit = sorted(s for s in df_final["Situação"].unique() if isinstance(s, str) and s.strip())
+            opts_sit = [{"label": s[0].upper() + s[1:].lower(), "value": s} for s in uniq_sit]
+            val_sit = [o["value"] for o in opts_sit]
+
+        agora = datetime.datetime.now(ZoneInfo("America/Sao_Paulo"))
+        hora_atualizacao_msg = [
+            html.Div(f"Dados atualizados em {agora.strftime('%d/%m/%Y')} às {agora.strftime('%H:%M')}"),
             html.Div("Dados obtidos via API do Senado")
-        ], style={"textAlign": "right", "fontStyle": "italic", "fontSize": "11px", "marginBottom": "10px"}),
-        dbc.Button("Exportar XLSX", id="btn-exportar", color="primary"),
-        dcc.Download(id="download-xlsx"),
-        html.Br(), html.Br(),
-        dcc.Checklist(
-            id="checklist_comissoes",
-            options=opts_com,
-            value=[o["value"] for o in opts_com],
-            labelStyle={"display": "inline-block", "margin-right": "15px", "fontFamily": "Verdana"},
-            inputStyle={"margin-right": "5px"}
-        ),
-        html.Br(),
-        dcc.Checklist(
-            id="checklist_situacoes",
-            options=opts_sit,
-            value=[o["value"] for o in opts_sit],
-            labelStyle={"display": "inline-block", "margin-right": "15px", "fontFamily": "Verdana"},
-            inputStyle={"margin-right": "5px"}
-        ),
-        html.Br(),
-        dash_table.DataTable(
-            id="tabela_proposicoes",
-            columns=colunas_tabela,
-            data=df_inicial.to_dict("records"),
-            filter_action="native",
-            sort_action="native",
-            sort_mode="multi",
-            page_action="none",
-            fixed_rows={"headers": True},
-            style_table={"overflowX": "visible", "maxHeight": "600px", "overflowY": "auto"},
-            style_cell={
-                "whiteSpace": "pre-line", "height": "auto", "textAlign": "left",
-                "padding": "5px", "fontFamily": "Verdana", "fontSize": "14px", "color": "#000000"
-            },
-            style_cell_conditional=[
-                {"if": {"column_id": "Título"},             "width": "100px"},
-                {"if": {"column_id": "Autor"},               "width": "150px"},
-                {"if": {"column_id": "Ementa"},              "width": "400px"},
-                {"if": {"column_id": "DataSituacaoRecente"}, "width": "150px"},
-                {"if": {"column_id": "TextosAssociados"},    "width": "250px"},
-                {"if": {"column_id": "Ficha de Tramitação"}, "width": "100px"},
-            ],
-            style_header={"backgroundColor": "#183EFF", "fontWeight": "bold",
-                          "color": "#FFFFFF", "fontFamily": "Verdana"},
-            style_data_conditional=[{"if": {"row_index": "even"}, "backgroundColor": "#F2F2F2"}],
-        )
-    ], fluid=True, style={"backgroundColor": "#FFFFFF", "color": "#000000", "fontFamily": "Verdana", "padding": "20px"})
+        ]
+        
+        btn_style = {'display': 'inline-block'} if not df_final.empty else {'display': 'none'}
+
+        return df_final.to_dict('records'), opts_com, val_com, opts_sit, val_sit, hora_atualizacao_msg, btn_style
 
     @app.callback(
         Output("tabela_proposicoes", "data"),
-        [Input("checklist_comissoes", "value"), Input("checklist_situacoes", "value")]
+        [Input('dados-completos-store', 'data'),
+         Input("checklist_comissoes", "value"),
+         Input("checklist_situacoes", "value")]
     )
-    def filtrar_por_comissao_e_situacoes(coms, sits):
-        if not coms or not sits:
+    def filtrar_tabela(dados_json, coms, sits):
+        if not dados_json or not coms or not sits:
             return []
-        df_f = df_inicial[df_inicial["Comissão"].isin(coms) &
-                          df_inicial["Situação"].isin(sits)]
-        return df_f.to_dict("records")
+        df_f = pd.DataFrame(dados_json)
+        df_filtrada = df_f[df_f["Comissão"].isin(coms) & df_f["Situação"].isin(sits)]
+        return df_filtrada.to_dict("records")
 
     @app.callback(
         Output("download-xlsx", "data"),
@@ -359,17 +424,8 @@ def criar_app_dash(df_inicial):
 # 5. MAIN
 ###############################################################################
 if __name__ == "__main__":
-    df_senado   = obter_dados_senado_comissoes()
-    df_filtrado = filtrar_materias(df_senado)
-    if df_filtrado.empty:
-        print("Nenhuma matéria encontrada para os filtros.")
-    else:
-        df_enriquecido = agregar_detalhes(df_filtrado)
-        if "Situação" not in df_enriquecido.columns:
-            df_enriquecido["Situação"] = ""
-        if "Comissão" not in df_enriquecido.columns:
-            df_enriquecido["Comissão"] = ""
-        app = criar_app_dash(df_enriquecido)
-        port = int(os.environ.get("PORT", 8080))
-        print(f"Acesse: http://0.0.0.0:{port}")
-        app.run(debug=False, host="0.0.0.0", port=port)
+    lista_colegiados = obter_lista_colegiados()
+    app = criar_app_dash(lista_colegiados)
+    port = int(os.environ.get("PORT", 8080))
+    print(f"Acesse: http://0.0.0.0:{port}")
+    app.run(debug=False, host="0.0.0.0", port=port)

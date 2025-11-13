@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <span class="fw-semibold">{{ user_email }}</span>
+            <span class="badge bg-secondary ms-2 text-uppercase">{{ profile_label }}</span>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'portal:home' %}" class="btn btn-outline-primary">Portal</a>
+            <a href="{% url 'portal:logout' %}" class="btn btn-outline-secondary">Sair</a>
+        </div>
+    </div>
+    <h1 class="text-center mb-4">Configurações da Plataforma</h1>
+    <p class="lead text-center mb-4">
+        Este painel centraliza o acesso às configurações dos módulos da Plataforma Legislativa. 
+        Ajuste pesos, selecione órgãos monitorados e configure matérias prioritárias.
+    </p>
+
+    <div class="card mb-4">
+        <div class="card-header">Perfis e Permissões</div>
+        <div class="card-body">
+            <ul class="mb-0">
+                <li><strong>Administrador:</strong> acesso completo a todos os recursos.</li>
+                <li><strong>Operador:</strong> pode alterar configurações do portal e acessar todos os aplicativos principais.</li>
+                <li><strong>Visualizador:</strong> acesso somente leitura às aplicações permitidas.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fa-solid fa-sliders"></i> Configurações dos Módulos
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="fa-solid fa-balance-scale text-primary"></i> Pesos para Priorização
+            </h5>
+            <p class="card-text">Configure os pesos usados para calcular a prioridade das proposições legislativas.</p>
+            <a href="/base-pl/configurar/?profile={{ user_profile }}" class="btn btn-primary mb-3" target="_blank">
+                <i class="fa-solid fa-cog"></i> Configurar Pesos
+            </a>
+            
+            <hr class="my-4">
+            
+            <h5 class="card-title">
+                <i class="fa-solid fa-building-columns text-success"></i> Comissões - Câmara dos Deputados
+            </h5>
+            <p class="card-text">Configure quais órgãos da Câmara devem ser monitorados.</p>
+            <a href="/busca-comissoes-cd/configurar/?profile={{ user_profile }}" class="btn btn-success mb-3" target="_blank">
+                <i class="fa-solid fa-list-check"></i> Configurar Órgãos (Câmara)
+            </a>
+            
+            <hr class="my-4">
+            
+            <h5 class="card-title">
+                <i class="fa-solid fa-landmark text-info"></i> Comissões - Senado Federal
+            </h5>
+            <p class="card-text">Configure quais órgãos do Senado devem ser monitorados.</p>
+            <a href="/busca-comissoes-sf/configurar/?profile={{ user_profile }}" class="btn btn-info mb-3" target="_blank">
+                <i class="fa-solid fa-list-check"></i> Configurar Órgãos (Senado)
+            </a>
+            
+            <hr class="my-4">
+            
+            <h5 class="card-title">
+                <i class="fa-solid fa-file-contract text-warning"></i> Matérias Prioritárias
+            </h5>
+            <p class="card-text">Configure quais proposições devem ser acompanhadas de forma prioritária e gere relatórios.</p>
+            <a href="/busca-materias/configurar/?profile={{ user_profile }}" class="btn btn-warning mb-3" target="_blank">
+                <i class="fa-solid fa-star"></i> Configurar Matérias Prioritárias
+            </a>
+
+            <hr class="my-4">
+
+            <h5 class="card-title">
+                <i class="fa-solid fa-clipboard-list text-danger"></i> Requerimentos Legislativos
+            </h5>
+            <p class="card-text">Ajuste as opções de filtros (tipos, anos e assuntos) exibidas no painel de requerimentos.</p>
+            <a href="/busca-reqs/configurar/?profile={{ user_profile }}" class="btn btn-danger mb-3" target="_blank">
+                <i class="fa-solid fa-sliders"></i> Configurar Filtros de Requerimentos
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4 border-info">
+        <div class="card-header bg-info text-white">
+            <i class="fa-solid fa-lightbulb"></i> Dicas de Uso
+        </div>
+        <div class="card-body">
+            <ul class="mb-0">
+                <li><strong>Pesos:</strong> Ajuste os valores para influenciar o cálculo de prioridade das proposições. Valores maiores indicam maior relevância.</li>
+                <li><strong>Órgãos:</strong> Selecione os órgãos que deseja monitorar. Após salvar, retorne à listagem e clique em "Atualizar dados".</li>
+                <li><strong>Matérias Prioritárias:</strong> Adicione proposições específicas para acompanhamento detalhado e geração de relatórios.</li>
+                <li><strong>Perfis:</strong> As configurações feitas pelos perfis <code>admin</code> e <code>normal</code> são aplicadas para todos os usuários, incluindo <code>viewer</code>.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="alert alert-secondary text-center" role="alert">
+        <i class="fa-solid fa-info-circle"></i> 
+        Para suporte técnico ou solicitação de novas funcionalidades, entre em contato com a equipe de desenvolvimento.
+    </div>
+</div>
+{% endblock %}
