@@ -4,7 +4,8 @@
 
 O trabalho de uma Assessoria parlamentar envolve diversas atividades que dependem da obtenção de informações confiáveis e em tempo hábil para se tomaram as devidas providências. Dessa forma, há grande potencial em ferramentas que possibilitem a obtenção automatizada de dados, manipulação e apresentação destes dados e sua transformação em informações úteis para os usuários.
 
-Para atender estas competências de forma tempestiva e assertiva, a ASPAR/MPO desenvolveu a Plataforma Legislativa MPO no Congresso, que objetiva facilitar o acesso aos assuntos/informações provenientes do Poder Legislativo, de interesse deste Ministério. Atualmente, a plataforma encontra-se em fase de testes, em servidor provisório, hospedada de maneira temporária no Cloud Run, como um aplicativo conteinerizado (Docker), utilizando um ambiente gerenciado em servidor no modelo PaaS (Plataforma como Serviço). Contudo, dada a riqueza e qualidade das informações, estamos desde já disponibilizando o acesso a todas as secretarias deste Ministério. Em paralelo, desde agosto de 2025 iniciou-se a migração para ambiente fornecido pelo governo em parceria com a Dataprev/Huawei.
+Para atender estas competências de forma tempestiva e assertiva, a ASPAR/MPO desenvolveu a Plataforma Legislativa MPO no Congresso, que objetiva facilitar o acesso aos assuntos/informações provenientes do Poder Legislativo, de interesse deste Ministério. Atualmente, a plataforma encontra-se em fase de testes, em servidor provisório, como um aplicativo conteinerizado (Docker), utilizando um ambiente gerenciado em servidor no modelo PaaS (Plataforma como Serviço). Contudo, dada a riqueza e qualidade das informações, estamos desde já disponibilizando o acesso a todas as secretarias deste Ministério. Em paralelo, desde agosto de 2025 iniciou-se a migração para ambiente fornecido pelo governo em parceria com a Dataprev/Huawei.nt
+Simultaneamente, foi inciado a adaptações do código para que seja utilizado pelo pela ASPAR/MGI e adaptada para qualquer outra Assessoria Parlamentar, ou entidades que querem utilizar para obter informações sobre os assuntos parlamentares. 
 
 ## Objetivos e Resultados Esperados
 
@@ -52,7 +53,7 @@ Essa abordagem permite que cada funcionalidade da plataforma seja desenvolvida, 
 ### **Stack Tecnológica**
 * 🖥️ **Backend:** Python, Flask, Dash, Pandas, SQLAlchemy
 * 🎨 **Frontend:** HTML, CSS, JavaScript, Dash, Bootstrap
-* ☁️ **Infraestrutura:** Docker, Docker Compose, Nginx, Huawei Cloud OBS, Google Cloud Run
+* ☁️ **Infraestrutura:** Docker, Docker Compose, Nginx, Huawei Cloud OBS
 
 ### **Estrutura do Projeto**
 

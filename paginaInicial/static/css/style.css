@@ -4,9 +4,9 @@
 
 /* Define a fonte global e compensa a navbar fixa */
 body {
-    font-family: Verdana, sans-serif;
-    background-color: #FFFFFF;
-    color: #000000;
+    font-family: 'Montserrat', sans-serif;
+    background-color: #e6fff5;
+    color: #0a2242;
     margin: 0;
     padding: 0;
     padding-top: 80px; /* Compensa a altura da navbar fixa */
@@ -74,8 +74,8 @@ header {
 
 /* Para aplicações ativas (não em construção) */
 .card.active-app {
-    background-color: #f0f0f0 !important; /* Cinza bem claro */
-    color: #000000 !important;
+    background-color: #ebf5ff !important; /* Cinza bem claro */
+    color: #500000 !important;
 }
 
 /* Para aplicações em construção */
@@ -152,7 +152,11 @@ h1 {
     }
 
     .header-image {
-        max-height: 120px;
+        max-height: 120px;    }
+
+    .card.clickable-card {
+        height: 200px !important;
+    
     }
 
     /* Se desejar reduzir a altura dos cards em telas muito pequenas, descomente a linha abaixo:

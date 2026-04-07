@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+*.log
+.env
+.DS_Store
+
+buscaComissoesCD/data/*
+!buscaComissoesCD/data/.gitkeep
+buscaComissoesCD/staticfiles/
+(CD) Levantamento de Proposições 2025.xlsx
+20251113_Reunião_Betânia_Carlos_ASPAR.docx
+Pauta Legislativa Prioritária MGI_2025.xlsx
+Projetos MGI no Bloco de Posicionamento SEI.xlsx

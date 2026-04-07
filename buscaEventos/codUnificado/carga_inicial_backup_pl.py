@@ -14,7 +14,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 DB_FILE = os.path.join(DATA_DIR, "agendaSemana.db")
 
 # Caminho para o Excel de backup
-EXCEL_FILE = os.path.join(BASE_DIR, "BackupPL.xlsx")
+EXCEL_FILE = os.path.join(BASE_DIR, "backup_pl.xlsx")
 
 
 # --- 2) Criação da tabela backup_pl (se ainda não existir) -------

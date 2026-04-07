@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <title>Proposições em Comissões da Câmara</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <style>
+        body { font-family: "Verdana", sans-serif; background: #f8f9ff; }
+        .card { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .table-responsive { max-height: 500px; overflow-y: auto; }
+        th { position: sticky; top: 0; background: #183EFF; color: #fff; }
+        .filters label { font-weight: 600; }
+        .filters select { min-height: 120px; }
+    </style>
+</head>
+<body class="container py-4">
+    <header class="mb-4">
+        <h1 class="h3 text-primary">Proposições nas Comissões da Câmara</h1>
+        <p class="text-muted mb-0">Dados atualizados em {{ last_update|date:"d/m/Y" }} às {{ last_update|date:"H:i" }}.</p>
+        <p class="text-muted">Fonte: Dados Abertos da Câmara dos Deputados.</p>
+        {% if can_configure %}
+        <p class="mt-3">
+            <a class="btn btn-outline-primary btn-sm" href="{{ configure_url }}">Configurar órgãos monitorados</a>
+        </p>
+        {% endif %}
+    </header>
+
+    {% if not selection_configured %}
+        {% if can_configure %}
+        <div class="alert alert-warning" role="alert">
+            Nenhum órgão foi selecionado. Utilize o botão "Configurar órgãos monitorados" para escolher quais colegiados devem ser acompanhados antes de atualizar os dados.
+        </div>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+            Nenhum órgão foi selecionado no momento. Solicite a um administrador a definição dos colegiados monitorados.
+        </div>
+        {% endif %}
+    {% elif not can_configure %}
+    <div class="alert alert-info" role="alert">
+        A listagem reflete a seleção definida pelos perfis administrador ou operador.
+    </div>
+    {% endif %}
+
+    <section class="filters row g-3 mb-4">
+        <div class="col-md-4">
+            <label for="filter-types" class="form-label">Tipos de proposição</label>
+            <select id="filter-types" class="form-select" multiple>
+                {% for value in types %}
+                <option value="{{ value }}" selected>{{ value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="filter-orgaos" class="form-label">Órgãos</label>
+            <select id="filter-orgaos" class="form-select" multiple>
+                {% for entry in all_orgaos %}
+                <option value="{{ entry.sigla }}" {% if entry.sigla in selected_orgaos %}selected{% endif %}>
+                    {{ entry.sigla }}{% if entry.nome %} — {{ entry.nome }}{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+            {% if catalog_generated_at %}
+            <small class="text-muted">Catálogo atualizado em {{ catalog_generated_at|date:"d/m/Y H:i" }}.</small>
+            {% endif %}
+        </div>
+        <div class="col-md-4">
+            <label for="filter-situacoes" class="form-label">Situações</label>
+            <select id="filter-situacoes" class="form-select" multiple>
+                {% for value in situacoes %}
+                <option value="{{ value }}" selected>{{ value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </section>
+
+    <section class="row align-items-end mb-4">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <label for="search-text" class="form-label">Busca na ementa</label>
+            <input type="search" id="search-text" class="form-control" placeholder="Digite palavras-chave">
+        </div>
+        <div class="col-md-3 text-md-end">
+            <button id="btn-refresh" class="btn btn-primary w-100">Atualizar dados</button>
+        </div>
+        <div class="col-md-3 text-md-end mt-3 mt-md-0">
+            <a id="btn-export" class="btn btn-outline-secondary w-100" href="#" role="button">
+                <i class="fa-solid fa-file-excel"></i> Exportar XLSX
+            </a>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle" id="results-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Proposição</th>
+                            <th scope="col">Autor</th>
+                            <th scope="col">Ementa</th>
+                            <th scope="col">Situação</th>
+                            <th scope="col">Órgão</th>
+                            <th scope="col">Última tramitação</th>
+                            <th scope="col">Links</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <p id="empty-state" class="text-center text-muted d-none mt-3">Nenhum resultado para os filtros selecionados.</p>
+        </div>
+    </section>
+
+    <script>
+        window.COMISSOES_ENDPOINTS = {
+            api: "{{ api_url }}",
+            exportXlsx: "{{ export_url }}",
+        };
+        window.COMISSOES_STATIC_PREFIX = "{{ static_prefix }}";
+    </script>
+    <script src="{{ static_prefix }}/comissoes/app.js"></script>
+</body>
+</html>

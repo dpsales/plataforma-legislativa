@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Configuração de Pesos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <header class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1 class="h3 mb-1">Configuração de Pesos</h1>
+                <p class="mb-0 text-muted">Gerencie os termos utilizados no cálculo de relevância antes de executar a consolidação.</p>
+            </div>
+            <div>
+                {% if profile %}
+                    <span class="badge text-bg-primary text-uppercase">Perfil: {{ profile }}</span>
+                {% endif %}
+            </div>
+        </header>
+
+        {% if messages %}
+            <div class="mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if can_configure %}
+            <section class="mb-5">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="h5 mb-0">Tabela de Pesos</h2>
+                            <small class="text-muted">Termos utilizados na métrica geral.</small>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" class="table-responsive">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_pesos">
+                            <input type="hidden" name="profile" value="{{ profile }}">
+                            {{ pesos_formset.management_form }}
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60%">Termo</th>
+                                        <th style="width: 20%">Peso</th>
+                                        <th style="width: 20%">Remover</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for form in pesos_formset %}
+                                        <tr>
+                                            <td>
+                                                {{ form.id }}
+                                                {{ form.term }}
+                                                {% if form.term.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.term.errors|join:', ' }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.weight }}
+                                                {% if form.weight.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.weight.errors|join:', ' }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if pesos_formset.can_delete %}
+                                                    <div class="form-check">
+                                                        {{ form.DELETE }}
+                                                        <label class="form-check-label">Excluir</label>
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">Nenhum termo configurado.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-5">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="h5 mb-0">Tabela de Pesos SMA</h2>
+                            <small class="text-muted">Termos utilizados na métrica específica de SMA.</small>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" class="table-responsive">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_pesos_sma">
+                            <input type="hidden" name="profile" value="{{ profile }}">
+                            {{ sma_formset.management_form }}
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60%">Termo</th>
+                                        <th style="width: 20%">Peso</th>
+                                        <th style="width: 20%">Remover</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for form in sma_formset %}
+                                        <tr>
+                                            <td>
+                                                {{ form.id }}
+                                                {{ form.term }}
+                                                {% if form.term.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.term.errors|join:', ' }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.weight }}
+                                                {% if form.weight.errors %}
+                                                    <div class="text-danger small mt-1">{{ form.weight.errors|join:', ' }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if sma_formset.can_delete %}
+                                                    <div class="form-check">
+                                                        {{ form.DELETE }}
+                                                        <label class="form-check-label">Excluir</label>
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">Nenhum termo configurado.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="h5 mb-0">Adicionar novo termo</h2>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" class="row gy-2 gx-3 align-items-center">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="add_entry">
+                            <input type="hidden" name="profile" value="{{ profile }}">
+                            <div class="col-md-3">
+                                {{ new_entry_form.namespace.label_tag }}
+                                {{ new_entry_form.namespace }}
+                                {% if new_entry_form.namespace.errors %}
+                                    <div class="text-danger small mt-1">{{ new_entry_form.namespace.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-5">
+                                {{ new_entry_form.term.label_tag }}
+                                {{ new_entry_form.term }}
+                                {% if new_entry_form.term.errors %}
+                                    <div class="text-danger small mt-1">{{ new_entry_form.term.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2">
+                                {{ new_entry_form.weight.label_tag }}
+                                {{ new_entry_form.weight }}
+                                {% if new_entry_form.weight.errors %}
+                                    <div class="text-danger small mt-1">{{ new_entry_form.weight.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-success w-100">Adicionar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                Os valores abaixo são mantidos por administradores e operadores. Solicite alterações ao time responsável.
+            </div>
+            <div class="row g-4">
+                <div class="col-12 col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h2 class="h5 mb-0">Tabela de Pesos</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Termo</th>
+                                            <th class="text-end">Peso</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in pesos_entries %}
+                                            <tr>
+                                                <td>{{ item.term }}</td>
+                                                <td class="text-end">{{ item.weight }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="2" class="text-center text-muted">Nenhum termo configurado.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h2 class="h5 mb-0">Tabela de Pesos SMA</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Termo</th>
+                                            <th class="text-end">Peso</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in sma_entries %}
+                                            <tr>
+                                                <td>{{ item.term }}</td>
+                                                <td class="text-end">{{ item.weight }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="2" class="text-center text-muted">Nenhum termo configurado.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <footer class="text-center text-muted small">
+            <p class="mb-0">Os valores configurados são aplicados na próxima execução da consolidação de proposições.</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,19 +1,10 @@
-# --- Interface Web (Dash) ---
-dash
-dash_bootstrap_components
-
-# --- Manipulação de Dados (Pandas) ---
+Django>=4.2,<5
+gunicorn
+whitenoise
+celery>=5.3
+redis>=4.5
+dj-database-url
 pandas
-xlsxwriter         # Usado para exportar para .xlsx
-# openpyxl         # Opcional, provavelmente não utilizado neste código
-
-# --- Agendamento de Tarefas ---
-APScheduler
-
-# --- Servidor Web e Chamadas HTTP ---
-flask
+xlsxwriter
 requests
-urllib3            # Adicionado pois é importado diretamente para a lógica de Retry
-
-# --- SDK de Cloud (Huawei OBS) ---
-esdk-obs-python
+urllib3

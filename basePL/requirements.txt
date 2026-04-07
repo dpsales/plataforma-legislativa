@@ -1,8 +1,12 @@
-dash
-dash-bootstrap-components
+django==5.1.1
+gunicorn
+dj-database-url
+whitenoise
 pandas
 numpy
 openpyxl
 requests
-google-cloud-storage
-odfpy          
+xlsxwriter
+python-docx
+psycopg2-binary
+dash-ag-grid

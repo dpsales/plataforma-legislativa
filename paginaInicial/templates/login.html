@@ -1,19 +1,26 @@
 {% extends "base.html" %}
 
-{% block title %}Login - MPO no Congresso{% endblock %}
+{% block title %}Login - Plataforma do Congresso{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center mb-4">Login - MPO no Congresso</h1>
-    {% if error %}
-    <div class="alert alert-danger" role="alert">
-        {{ error }}
-    </div>
-    {% endif %}
-    <form method="post" action="/login">
+    <h1 class="text-center mb-4">Login - Plataforma Congresso Assessoria Parlamentar</h1>
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">
+    {% for error in form.non_field_errors %}
+      <div>{{ error }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <form method="post" action="{% url 'portal:login' %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
         <div class="mb-3">
             <label for="email" class="form-label">Email:</label>
-            <input type="email" class="form-control" id="email" name="email" required>
+      <input type="email" class="form-control" id="email" name="email" value="{{ form.email.value|default:'' }}" required>
+      {% if form.email.errors %}
+      <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+      {% endif %}
         </div>
 
         <div class="mb-3">
@@ -21,7 +28,10 @@
             <!-- Contêiner relativo para o input e o ícone -->
             <div class="position-relative">
                 <!-- Adicionamos um padding-right no input para não sobrepor o texto ao ícone -->
-                <input type="password" class="form-control" id="token" name="token" required style="padding-right: 40px;">
+        <input type="password" class="form-control" id="token" name="token" required style="padding-right: 40px;">
+                {% if form.token.errors %}
+                <div class="text-danger small mt-1">{{ form.token.errors.0 }}</div>
+                {% endif %}
                 <!-- Ícone posicionado absolutamente -->
                 <span 
                     style="

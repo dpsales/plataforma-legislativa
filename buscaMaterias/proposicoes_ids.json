@@ -1,0 +1,69 @@
+{
+    "descrição": "Lista de IDs de Proposições da Câmara dos Deputados relevantes para o Ministério da Gestão e da Inovação em Serviços Públicos (MGI), priorizando matérias em debate e fiscalização.",
+    "data_referencia": "Outubro/2025",
+    "proposicoes_mgi": [
+        {
+            "id_proposicao": 2248554,
+            "tipo_sigla": "PEC",
+            "numero": "32",
+            "ano": 2020,
+            "assunto": "Reforma Administrativa e Serviço Público",
+            "prioridade_mgi": 14,
+            "justificativa": "Principal matéria sobre a estrutura do funcionalismo público federal, foco da SGP."
+        },
+        {
+            "id_proposicao": 2405709,
+            "tipo_sigla": "PL",
+            "numero": "3954",
+            "ano": 2023,
+            "assunto": "Alteração na Lei de Licitações (Lei nº 14.133)",
+            "prioridade_mgi": 12,
+            "justificativa": "Altera a lei de licitações, tema central para a Secretaria de Gestão e Inovação (SEGES)."
+        },
+        {
+            "id_proposicao": 2424759,
+            "tipo_sigla": "REQ",
+            "numero": "25",
+            "ano": 2024,
+            "assunto": "Audiência Pública - Remuneração Variável de Servidores",
+            "prioridade_mgi": 12,
+            "justificativa": "Requerimento aprovado na CASP para debater política de pessoal e desempenho, área de interesse do MGI."
+        },
+        {
+            "id_proposicao": 2441019,
+            "tipo_sigla": "REQ",
+            "numero": "165",
+            "ano": 2024,
+            "assunto": "Fiscalização - Desvio de Recursos MGI/TSE e Invasão de Sistema",
+            "prioridade_mgi": 14,
+            "justificativa": "Requerimento de Fiscalização (CFFC) ao TCU, alta prioridade para a ASPAR/Segurança da Informação."
+        },
+        {
+            "id_proposicao": 2456617,
+            "tipo_sigla": "REQ",
+            "numero": "38",
+            "ano": 2024,
+            "assunto": "Audiência Pública - Plano Brasil Digital / Transformação Digital",
+            "prioridade_mgi": 12,
+            "justificativa": "Requerimento aprovado na CCTI para debater a Estratégia Federal de Governo Digital, foco da SGD."
+        },
+        {
+            "id_proposicao": 2470000,
+            "tipo_sigla": "PL",
+            "numero": "1466",
+            "ano": 2025,
+            "assunto": "Reajuste Salarial e Reestruturação de Carreiras do Executivo",
+            "prioridade_mgi": 14,
+            "justificativa": "Projeto de Lei que substituiu MP sobre reajuste e reestruturação, de iniciativa do MGI (SGP)."
+        },
+        {
+            "id_proposicao": 2501000,
+            "tipo_sigla": "RIC",
+            "numero": "2000",
+            "ano": 2025,
+            "assunto": "Requerimento de Informação sobre o CNU (Exemplo)",
+            "prioridade_mgi": 12,
+            "justificativa": "Exemplo de Requerimento de Informação (RIC) comum, monitorado pela ASPAR."
+        }
+    ]
+}

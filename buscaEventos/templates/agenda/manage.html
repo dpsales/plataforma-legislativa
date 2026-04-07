@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gerenciar monitoramentos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <header class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <h1 class="h3 mb-1">Gerenciar monitoramentos</h1>
+                <p class="mb-0 text-muted">Inclua e ajuste as proposições que devem ser acompanhadas.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                {% if profile %}
+                    <span class="badge text-bg-primary text-uppercase">Perfil: {{ profile }}</span>
+                {% endif %}
+                <a href="{{ index_url }}" class="btn btn-outline-secondary">Voltar</a>
+            </div>
+        </header>
+
+        {% if messages %}
+            <div class="mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <section class="mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="h5 mb-0">Adicionar proposição</h2>
+                        <small class="text-muted">{{ available_total }} disponíveis no catálogo geral.</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="row gy-2 gx-3 align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add">
+                        <input type="hidden" name="profile" value="{{ profile }}">
+                        <div class="col-md-8">
+                            {{ add_form.proposition.label_tag }}
+                            {{ add_form.proposition }}
+                            {% if add_form.proposition.errors %}
+                                <div class="text-danger small mt-1">{{ add_form.proposition.errors|join:', ' }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success w-100">Adicionar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Monitoramentos ativos</h2>
+                    <small class="text-muted">Edite prioridades, destaque ou remova entradas.</small>
+                </div>
+                <div class="card-body table-responsive">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" name="profile" value="{{ profile }}">
+                        {{ formset.management_form }}
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Proposição</th>
+                                    <th class="text-center">Prioridade</th>
+                                    <th class="text-center">Destaque</th>
+                                    <th>Observações</th>
+                                    <th class="text-center">Remover</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for form in formset %}
+                                    <tr>
+                                        <td>
+                                            {{ form.instance.proposition.identifier }}<br>
+                                            <small class="text-muted">{{ form.instance.proposition.ementa|default:"Sem ementa" }}</small>
+                                            {{ form.id }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ form.prioridade }}
+                                            {% if form.prioridade.errors %}
+                                                <div class="text-danger small mt-1">{{ form.prioridade.errors|join:', ' }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="form-check form-switch d-inline-flex justify-content-center">
+                                                {{ form.destaque }}
+                                            </div>
+                                            {% if form.destaque.errors %}
+                                                <div class="text-danger small mt-1">{{ form.destaque.errors|join:', ' }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ form.observacoes }}
+                                            {% if form.observacoes.errors %}
+                                                <div class="text-danger small mt-1">{{ form.observacoes.errors|join:', ' }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if formset.can_delete %}
+                                                <div class="form-check d-inline-flex justify-content-center">
+                                                    {{ form.DELETE }}
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Nenhuma proposição monitorada.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Importar ajustes em lote</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="row gy-2 gx-3 align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="upload">
+                        <input type="hidden" name="profile" value="{{ profile }}">
+                        <div class="col-md-6">
+                            {{ upload_form.arquivo.label_tag }}
+                            {{ upload_form.arquivo }}
+                            {% if upload_form.arquivo.errors %}
+                                <div class="text-danger small mt-1">{{ upload_form.arquivo.errors|join:', ' }}</div>
+                            {% endif %}
+                            <small class="text-muted">Colunas esperadas: identifier, prioridade, destaque, observacoes.</small>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-outline-primary w-100">Processar arquivo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

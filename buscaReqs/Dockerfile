@@ -1,25 +1,33 @@
-# Usa uma imagem base do Python mais leve para produção
-FROM python:3.11-slim
+FROM mirror.gcr.io/library/python:3.11-slim
 
-# Define o diretório de trabalho dentro do container como "buscaReqs"
-WORKDIR /buscaReqs
+ENV PYTHONUNBUFFERED=1 \
+	PYTHONDONTWRITEBYTECODE=1 \
+	DJANGO_SETTINGS_MODULE=busca_reqs.settings
 
-# Copia o arquivo de dependências
-COPY requirements.txt requirements.txt
+WORKDIR /app
 
-# Instala as dependências sem cache para manter a imagem leve
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends build-essential curl \
+	&& rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia o restante do código para dentro do container
-COPY buscaReqs15.py .
+COPY . .
 
-# Define variáveis de ambiente para evitar problemas no Python
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ARG APP_UID=1000
+ARG APP_GID=1000
+RUN groupadd --gid "${APP_GID}" appuser \
+	&& useradd --uid "${APP_UID}" --gid "${APP_GID}" --create-home --shell /bin/bash appuser \
+	&& mkdir -p /app/staticfiles /app/data \
+	&& chown -R appuser:appuser /app
 
-# Expõe a porta que o Gunicorn vai usar
+ENV PATH="/app/scripts:${PATH}" \
+	GUNICORN_WORKERS=3 \
+	RUN_INITIAL_SYNC=1 \
+	IMPORT_DEFAULT_JSON=1
+RUN chmod +x /app/scripts/*.sh
+
 EXPOSE 8080
 
-# Comando de inicialização usando Gunicorn
-# "buscaReqs15:server" significa: no arquivo buscaReqs15.py, encontre a variável 'server' (que é o app Flask)
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "buscaReqs15:server"]
+CMD ["/app/scripts/start-web.sh"]

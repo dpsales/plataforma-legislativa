@@ -1,21 +1,32 @@
-# Use a imagem oficial do Python em uma versão slim para reduzir o tamanho da imagem
-FROM python:3.9-slim
+FROM mirror.gcr.io/library/python:3.11-slim
 
-# Define o diretório de trabalho dentro do container
-WORKDIR /basePL
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    DJANGO_SETTINGS_MODULE=base_pl.settings
 
-# Copia o arquivo de dependências para o container
-COPY requirements.txt .
+WORKDIR /app
 
-# Atualiza o pip e instala as dependências listadas em requirements.txt
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copia o restante dos arquivos da aplicação para o container
-COPY codunifplsenadoecamara4.py .
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Expõe a porta 8080 (necessária para o Cloud Run)
+COPY . .
+
+ARG APP_UID=1000
+ARG APP_GID=1000
+RUN groupadd --gid "${APP_GID}" appuser \
+    && useradd --uid "${APP_UID}" --gid "${APP_GID}" --create-home --shell /bin/bash appuser \
+    && mkdir -p /app/staticfiles /app/data \
+    && chown -R appuser:appuser /app
+
+ENV PATH="/app/scripts:${PATH}" \
+    GUNICORN_WORKERS=3
+
+RUN chmod +x /app/scripts/*.sh
+
 EXPOSE 8080
 
-# Executa a aplicação (o app.py deve estar configurado para rodar com debug=False e escutar na porta 8080)
-CMD ["python", "codunifplsenadoecamara4.py"]
+CMD ["/app/scripts/start-web.sh"]

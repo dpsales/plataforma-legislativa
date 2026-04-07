@@ -1,7 +1,3 @@
-Projeto **"Plataforma Legislativa"**.
-
------
-
 ## 📋 Sobre a Plataforma Legislativa
 
 A **Plataforma Legislativa** é um sistema de código aberto projetado para coletar, organizar e apresentar dados do processo legislativo de forma acessível e transparente. A ferramenta permite que cidadãos, jornalistas e pesquisadores monitorem proposições, votações e a atividade de parlamentares em tempo real.
@@ -57,156 +53,96 @@ Facilitar o controle social e o engajamento cívico, fornecendo acesso simplific
 
 ## 🏗️ Arquitetura Técnica
 
-### **Stack Tecnológica**
+### **Stack Tecnológica (atual)**
 
 ```
 🖥️ Backend
-├── Django 5.2+ (Framework web)
-├── PostgreSQL 13+ (Banco de dados relacional)
-├── Elasticsearch 7.10+ (Motor de busca e indexação)
-├── Redis (Cache e Filas de tarefas)
-└── Celery (Processamento assíncrono de dados)
+├── `paginaInicial/` (Django 4 + Gunicorn) — gateway de autenticação e roteamento
+├── Microserviços Django independentes (`busca*`, `basePL/`) servindo dados e páginas específicas
+└── Scripts de coleta assíncrona via Celery/Redis onde aplicável
 
 🎨 Frontend
-├── HTML5 + CSS3 + JavaScript
-├── Bootstrap (Componentes e responsividade)
-├── Chart.js (Gráficos e visualizações)
-└── Design System Gov.br (Opcional)
+└── Templates Django + Dash (serviço `buscaEventos/`)
 
 ☁️ Infraestrutura
-├── Kubernetes (Orquestração de contêineres)
-├── Docker (Containerização)
-├── GitHub Actions (CI/CD)
-├── Nginx (Servidor web e proxy reverso)
-└── Persistent Volumes (Armazenamento)
+├── Docker + docker-compose
+├── Redis (broker/result backend Celery)
+└── Nginx (proxy reverso em `revProxy/`)
+
+🧩 Serviços adicionais
+└── `basePL/` — serviço de consulta/base de pesos; `buscaComissoesCD/`, `buscaComissoesSF/`, `buscaComissoesMistas/`, `buscaReqs/`, `buscaEventos/` etc.
 ```
 
 ### **Estrutura do Projeto**
 
+---
+
+Estrutura de diretórios principal
+--------------------------------
+
 ```
 plataforma-legislativa/
-├── src/                         # Código-fonte Django
-│   ├── legislativo/             # App principal: proposições, votações
-│   │   ├── models.py            # Models: Proposicao, Votacao, Documento
-│   │   ├── views.py             # Views: Busca, Detalhes, APIs
-│   │   ├── tasks.py             # Tarefas Celery para coleta de dados
-│   │   └── services/            # Lógica de integração com Elasticsearch
-│   ├── parlamentares/           # App para perfis de parlamentares
-│   ├── usuarios/                # Sistema de autenticação e alertas
-│   ├── core/                    # Configurações Django
-│   ├── staticfiles/             # Assets estáticos
-│   └── templates/               # Templates HTML
-├── k8s/                         # Configurações Kubernetes
-├── guides/                      # Documentação técnica
-└── requirements.txt             # Dependências Python
+├── docker-compose.yaml        # Orquestra todos os serviços
+├── revProxy/                  # Configuração Nginx para roteamento em 8080
+├── paginaInicial/             # Gateway Django (login, menus, rotas internas)
+│   ├── pagina_inicial/        # settings.py, urls.py, wsgi.py
+│   ├── portal/                # Views/templates do portal principal
+│   ├── basepl/                # App Django para busca/configuração BasePL
+│   ├── static/                # CSS/JS do gateway
+│   └── templates/             # Templates (login, portal, documentação, etc.)
+├── basePL/                    # Serviço BasePL (pesos e busca unificada)
+├── buscaComissoesCD/          # Django + Celery para comissões da Câmara
+├── buscaComissoesSF/          # Django + Celery para comissões do Senado
+├── buscaComissoesMistas/      # Django + Celery para comissões mistas
+├── buscaEventos/              # Coleta + Dash para eventos legislativos
+├── buscaMaterias/             # Coleta de matérias legislativas
+├── buscaReqs/                 # Coleta de requerimentos e autores
+└── .../data                   # Bancos SQLite/artefatos persistidos por serviço
 ```
 
------
+Cada microserviço possui `Dockerfile`, `requirements.txt`, scripts e eventuais rotinas Celery próprias. O gateway `paginaInicial/` autentica o usuário e redireciona para os serviços publicados atrás do `revProxy` na mesma rede Docker. Dados persistidos em `*/data/` permanecem entre reinicializações.
+
+---
 
 ## 🚀 Guia de Instalação
 
 ### 📋 **Pré-requisitos**
 
   - **Python 3.8+**
-  - **PostgreSQL 13+**
-  - **Elasticsearch 7.10+**
-  - **Redis 6+**
+  - **Docker**
   - **Git**
 
 ### **1️⃣ Clone do Repositório**
 
 ```bash
 git clone https://github.com/seu-usuario/plataforma-legislativa.git
-cd plataforma-legislativa/src
+cd plataforma-legislativa
 ```
 
-### **2️⃣ Ambiente Virtual**
+### **2️⃣ Subindo com Docker Compose**
 
 ```bash
-python -m venv venv
-source venv/bin/activate
+docker compose up --build
 ```
 
-### **3️⃣ Instalação de Dependências**
+- Portal: http://localhost:8080 (via Nginx)
+- Acesso direto ao Django/Gunicorn: http://localhost:8000
 
-```bash
-pip install -r requirements.txt
+Para atualizar configurações, use variáveis no próprio comando ou em um `.env` na raiz:
+
 ```
-
-### **4️⃣ Configuração de Ambiente**
-
-Crie o arquivo `.env` na pasta `src/`:
-
-```env# Configurações de Email (para alertas e notificações)
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp.seuservidor.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=seu_email@dominio.com
-EMAIL_HOST_PASSWORD=sua_senha_de_email
-
-# Configurações de Cache (Redis)
-CACHES_DEFAULT_LOCATION=127.0.0.1:6379:1
-
-# Configurações Django
-SECRET_KEY=sua-chave-secreta-django
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-# Banco de dados PostgreSQL
-POSTGRES_DB=legislativo
-POSTGRES_USER=seu_usuario
-POSTGRES_PASSWORD=sua_senha_segura
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-
-# Elasticsearch
-ELASTICSEARCH_URL=http://localhost:9200
-
-# Redis
-REDIS_URL=redis://localhost:6379/0
-```
-
-### **5️⃣ Configuração do Banco**
-
-```bash
-python manage.py makemigrations
-python manage.py migrate
-python manage.py createsuperuser
-```
-
-### **6️⃣ Execução do Sistema**
-
-```bash
-# Em um terminal, inicie o worker Celery
-celery -A core worker -l info
-
-# Em outro terminal, inicie o servidor de desenvolvimento
-python manage.py runserver
+PAGINA_INICIAL_SECRET_KEY=altere-essa-chave
+PAGINA_INICIAL_DEBUG=True
 ```
 
 -----
 
 ## 📚 Uso do Sistema
 
-### **🔐 Autenticação**
-
-1.  Acesse `/usuarios/login/` para fazer login.
-2.  Crie uma conta ou use as credenciais de superusuário.
-
-### **🔍 Navegação**
-
-1.  **Página Inicial**: Dashboard com destaques e busca principal.
-2.  **Busca**: `/busca/` - Utilize filtros para encontrar proposições.
-3.  **Parlamentares**: `/parlamentares/` - Navegue e encontre perfis.
-
-### **🛠️ Administração**
-
-1.  **Painel Admin**: Acesse `/admin/`.
-2.  **Funcionalidades**:
-      - Gerenciar fontes de dados.
-      - Monitorar tarefas de importação.
-      - Visualizar logs e métricas de uso.
+- **Autenticação:** `/login` usa usuários definidos em `paginaInicial/users/users.json`.
+- **Portal:** `/` exibe o grid com cartões; cada botão redireciona para serviços externos (ex.: `comissoes_senado`, `requerimentos`).
+- **Comissões da Câmara:** `/busca-comissoes-cd/` abre o novo painel web servido pelo microserviço Django (filtros avançados + exportação).
+- **Logout:** `/logout` limpa a sessão.
 
 -----
 
@@ -270,15 +206,10 @@ kubectl get pods -n plataforma-legislativa
 
 ### **👥 Equipe Responsável**
 
-**Gabin/SEGES/MGI**
-
-**Responsável Técnico**: 
-
-
 **Equipe de Desenvolvimento**:
 
   - Mario dos Santos M. Valverde Neto ASPAR/MPO
-  - Daiana de Paula Sales GABIN/SEGES/MGI
+  - Daiana de Paula Sales CGINF/SEGES/MGI
 
 ### **📧 Contatos**
 

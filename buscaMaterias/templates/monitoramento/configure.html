@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <title>Configurar monitoramento</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <style>
+        body { font-family: "Verdana", sans-serif; background: #f8f9ff; }
+        .card { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table tbody tr td { vertical-align: middle; }
+    </style>
+</head>
+<body class="container py-4">
+    <header class="mb-4">
+        <h1 class="h3 text-primary">Configurar monitoramento de proposições</h1>
+        <p class="text-muted mb-1">Importe o documento JSON oficial ou cadastre ajustes pontuais nesta interface.</p>
+        <p class="text-muted mb-3">Após alterar a lista, execute a atualização dos dados para refletir as mudanças.</p>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ index_url }}">&larr; Voltar para a listagem</a>
+        {% if profile %}
+        <span class="badge bg-secondary ms-2">Perfil: {{ profile }}</span>
+        {% endif %}
+        {% if download_url %}
+        <a class="btn btn-link btn-sm" href="{{ download_url }}">Baixar documento atual</a>
+        {% endif %}
+    </header>
+
+    {% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:"info" }}" role="alert">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <section class="card mb-4">
+        <div class="card-body">
+            <h2 class="h5">Importar documento JSON</h2>
+            <p class="text-muted">O arquivo deve seguir o formato definido pelo time de análise legislativa. O conteúdo atual será substituído.</p>
+            <form method="post" enctype="multipart/form-data" class="row g-3">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="upload">
+                {% if profile %}<input type="hidden" name="profile" value="{{ profile }}">{% endif %}
+                <div class="col-md-8">
+                    {{ upload_form.arquivo.label_tag }}
+                    {{ upload_form.arquivo }}
+                    {% if upload_form.arquivo.errors %}
+                    <div class="text-danger small">{{ upload_form.arquivo.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 align-self-end">
+                    <button type="submit" class="btn btn-primary w-100">Importar documento</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="card mb-4">
+        <div class="card-body">
+            <h2 class="h5">Adicionar proposição manualmente</h2>
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add">
+                {% if profile %}<input type="hidden" name="profile" value="{{ profile }}">{% endif %}
+                <div class="col-md-3">
+                    {{ add_form.proposition_id.label_tag }}
+                    {{ add_form.proposition_id }}
+                    {% if add_form.proposition_id.errors %}<div class="text-danger small">{{ add_form.proposition_id.errors|join:", " }}</div>{% endif %}
+                </div>
+                <div class="col-md-3">
+                    {{ add_form.casa.label_tag }}
+                    {{ add_form.casa }}
+                </div>
+                <div class="col-md-3">
+                    {{ add_form.secretaria.label_tag }}
+                    {{ add_form.secretaria }}
+                </div>
+                <div class="col-md-3">
+                    {{ add_form.tipo_sigla.label_tag }}
+                    {{ add_form.tipo_sigla }}
+                </div>
+                <div class="col-md-2">
+                    {{ add_form.numero.label_tag }}
+                    {{ add_form.numero }}
+                </div>
+                <div class="col-md-2">
+                    {{ add_form.ano.label_tag }}
+                    {{ add_form.ano }}
+                </div>
+                <div class="col-md-4">
+                    {{ add_form.assunto.label_tag }}
+                    {{ add_form.assunto }}
+                </div>
+                <div class="col-md-2">
+                    {{ add_form.prioridade.label_tag }}
+                    {{ add_form.prioridade }}
+                </div>
+                <div class="col-12">
+                    {{ add_form.justificativa.label_tag }}
+                    {{ add_form.justificativa }}
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-success">Adicionar proposição</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-body">
+            <h2 class="h5">Proposições monitoradas</h2>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Casa</th>
+                            <th scope="col">Secretaria</th>
+                            <th scope="col">Tipo</th>
+                            <th scope="col">Número/Ano</th>
+                            <th scope="col">Prioridade</th>
+                            <th scope="col">Assunto</th>
+                            <th scope="col" class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in propositions %}
+                        <tr>
+                            <td>{{ item.proposition_id }}</td>
+                            <td>{{ item.get_casa_display }}</td>
+                            <td>{{ item.secretaria|default:"-" }}</td>
+                            <td>{{ item.tipo_sigla|default:"-" }}</td>
+                            <td>{{ item.numero|default:"-" }}{% if item.ano %}/{{ item.ano }}{% endif %}</td>
+                            <td>{{ item.prioridade|default:"-" }}</td>
+                            <td>{{ item.assunto|default:"-" }}</td>
+                            <td class="text-end">
+                                <form method="post" action="{% url 'monitoramento:delete-tracked' item.pk %}" style="display:inline">
+                                    {% csrf_token %}
+                                    {% if profile %}<input type="hidden" name="profile" value="{{ profile }}">{% endif %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remover a proposição {{ item.proposition_id }}?');">Remover</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">Nenhuma proposição cadastrada.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

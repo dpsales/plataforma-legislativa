@@ -16,7 +16,7 @@ import unicodedata
 import logging
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Tuple, Union, Optional
 
 import pandas as pd
 import requests
@@ -25,7 +25,6 @@ from urllib3.util.retry import Retry
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table, Input, Output
-from google.cloud import storage
 from zoneinfo import ZoneInfo
 
 # ---------------------------------------------------------------------
@@ -41,22 +40,68 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------
 # Constantes gerais
 # ---------------------------------------------------------------------
-BUCKET_NAME = os.getenv("BUCKET_NAME", "data")
-GCS_PATH    = "proposicoes_unificadas.xlsx"
 TMP_DIR     = os.getenv("TMP_DIR", "data")
 LOCAL_FILE  = os.path.join(TMP_DIR, "proposicoes_unificadas.xlsx")
+CSV_FILE    = os.path.join(TMP_DIR, "proposicoes_unificadas.csv")
+ALERTS_FILE = os.path.join(TMP_DIR, "alertas_situacao.csv")
 TZ = ZoneInfo("America/Sao_Paulo")   # 🟢 fuso oficial de Brasília
+ALERT_COLUMNS = [
+    "Casa",
+    "Tipo",
+    "Proposição",
+    "Situação Anterior",
+    "Situação Atual",
+    "Data Ultima Tramitação",
+    "Atualizado Em",
+]
 
 # -----------------------------------------------------------------
-# Helper para recarregar o XLSX gerado e atualizar variáveis globais
+# Helper para acessar datasets e recarregar os dados em memória
 # -----------------------------------------------------------------
+def load_dataset() -> Optional[pd.DataFrame]:
+    if os.path.exists(CSV_FILE):
+        try:
+            return pd.read_csv(CSV_FILE, dtype=str)
+        except Exception as exc:  # pragma: no cover - defesa
+            log.warning("Falha ao carregar CSV consolidado: %s", exc)
+            return None
+    if os.path.exists(LOCAL_FILE):
+        try:
+            return pd.read_excel(LOCAL_FILE, dtype=str)
+        except Exception as exc:  # pragma: no cover - defesa
+            log.warning("Falha ao carregar XLSX consolidado: %s", exc)
+            return None
+    return None
+
+
 def refresh_data():
-    global df_original, casa_counts, cd_count, sf_count
+    global df_original, casa_counts, cd_count, sf_count, df_alertas
 
-    df_final = pd.read_excel(LOCAL_FILE, dtype=str)
+    df_final = load_dataset()
+    if df_final is None:
+        log.info("Nenhum arquivo de dataset encontrado; carregando estado vazio")
+        df_original = pd.DataFrame(columns=SELECTED_COLS)
+        df_alertas = load_alerts()
+        casa_counts = {}
+        cd_count = 0
+        sf_count = 0
+        return
 
-    df_original = df_final[SELECTED_COLS].copy()
-    
+    missing_cols = [col for col in SELECTED_COLS if col not in df_final.columns]
+    if missing_cols:
+        log.warning(
+            "Dataset sem colunas esperadas %s; carregando dataset vazio",
+            missing_cols,
+        )
+        df_original = pd.DataFrame(columns=SELECTED_COLS)
+        df_alertas = load_alerts()
+        casa_counts = {}
+        cd_count = 0
+        sf_count = 0
+        return
+
+    df_original = df_final[SELECTED_COLS].copy().fillna("")
+
     # --- garante que Peso seja numérico para ordenação correta ---
     df_original["Peso"] = pd.to_numeric(
         df_original["Peso"], errors="coerce"
@@ -76,6 +121,73 @@ def refresh_data():
     cd_count = casa_counts.get("CD", 0)
     sf_count = casa_counts.get("SF", 0)
 
+    df_alertas = load_alerts()
+
+
+def load_alerts() -> pd.DataFrame:
+    if not os.path.exists(ALERTS_FILE):
+        return pd.DataFrame(columns=ALERT_COLUMNS)
+    try:
+        alerts = pd.read_csv(ALERTS_FILE, dtype=str).fillna("")
+        missing = [col for col in ALERT_COLUMNS if col not in alerts.columns]
+        if missing:
+            log.warning("Arquivo de alertas sem colunas %s; descartando conteúdo", missing)
+            return pd.DataFrame(columns=ALERT_COLUMNS)
+        return alerts[ALERT_COLUMNS]
+    except Exception as exc:  # pragma: no cover - defensivo
+        log.warning("Falha ao carregar alertas: %s", exc)
+        return pd.DataFrame(columns=ALERT_COLUMNS)
+
+
+def detect_status_changes(new_df: pd.DataFrame, previous_df: Optional[pd.DataFrame]) -> pd.DataFrame:
+    if previous_df is None or previous_df.empty:
+        return pd.DataFrame(columns=ALERT_COLUMNS)
+
+    required_new = ["Casa", "Tipo", "Proposição", "Situação Atual", "Data Ultima Tramitação"]
+    if any(col not in new_df.columns for col in required_new):
+        log.warning("Dataset novo sem colunas necessárias para alertas")
+        return pd.DataFrame(columns=ALERT_COLUMNS)
+    if "Situação Atual" not in previous_df.columns:
+        log.warning("Dataset anterior sem coluna 'Situação Atual'; alertas desativados")
+        return pd.DataFrame(columns=ALERT_COLUMNS)
+
+    def _normalize(series: pd.Series) -> pd.Series:
+        return series.fillna("").astype(str).str.strip()
+
+    novo = new_df[required_new].copy()
+    antigo = previous_df[["Casa", "Proposição", "Situação Atual"]].copy()
+    antigo = antigo.rename(columns={"Situação Atual": "Situação Anterior"})
+
+    novo = novo.drop_duplicates(subset=["Casa", "Proposição"], keep="last")
+    antigo = antigo.drop_duplicates(subset=["Casa", "Proposição"], keep="last")
+
+    combinado = novo.merge(antigo, on=["Casa", "Proposição"], how="inner")
+
+    combinado["Situação Atual"] = _normalize(combinado["Situação Atual"])
+    combinado["Situação Anterior"] = _normalize(combinado["Situação Anterior"])
+    combinado["Data Ultima Tramitação"] = _normalize(combinado["Data Ultima Tramitação"])
+
+    alterados = combinado[
+        (combinado["Situação Atual"] != combinado["Situação Anterior"])
+        & combinado["Situação Atual"].ne("")
+    ].copy()
+
+    if alterados.empty:
+        return pd.DataFrame(columns=ALERT_COLUMNS)
+
+    alterados["Atualizado Em"] = datetime.now(tz=TZ).strftime("%Y-%m-%d %H:%M:%S")
+    return alterados[
+        [
+            "Casa",
+            "Tipo",
+            "Proposição",
+            "Situação Anterior",
+            "Situação Atual",
+            "Data Ultima Tramitação",
+            "Atualizado Em",
+        ]
+    ]
+
 # Sessão HTTP com retry
 session = requests.Session()
 retry_strategy = Retry(
@@ -87,8 +199,6 @@ retry_strategy = Retry(
 adapter = HTTPAdapter(max_retries=retry_strategy)
 session.mount("https://", adapter)
 session.mount("http://", adapter)
-
-storage_client = storage.Client()
 
 # ---------------------------------------------------------------------
 # Constantes de coleta Câmara (CSV)
@@ -135,7 +245,8 @@ MAX_RETRIES       = 3
 BACKOFF_FACTOR    = 1.5
 TIMEOUT           = 15
 MAX_WORKERS       = 2
-TIPOS_SENADO      = {"PL","PEC","MPV","PDL","PLP","PRC","PLN","SUG","PLS","MSC"}
+TIPOS_SENADO      = {"PL","PEC","MPV","PDL","PLP","PRC","PLN","SUG","PLS",
+                     "MSC","PEP","PDC","EPP","PDS","PLS","PLC", "PPR"}
 
 # ---------------------------------------------------------------------
 # Colunas finais e pesos
@@ -152,30 +263,90 @@ SELECTED_COLS = [
     "Peso", "Inteiro Teor - Inicial", "Ficha Tramitação"
 ]
 
+# Valores padrão para evitar falhas na inicialização do Dash quando o XLSX ainda
+# não está disponível ou teve o schema alterado.
+df_original = pd.DataFrame(columns=SELECTED_COLS)
+casa_counts = {}
+cd_count = 0
+sf_count = 0
+
 # Pesos para cálculo de relevância
 PESOS = {
-    "Planejamento": 10, "Orçamento": 10, "Tebet": 10,
-    "Política Nacional": 8, "Fundo": 5, "Programa Nacional": 5,
-    "Valor": 3, "Cria": 2, "Investimento": 8, "LOA": 10, "LDO": 10,
-    "PPA": 10, "Transferências": 5, "Responsabilidade Fiscal": 10,
-    "Crédito": 8, "Orçamentário": 14, "plurianual": 10,
-    "diretrizes orçamentárias": 10, "políticas públicas": 7,
-    "impacto": 3, "plurianuais": 10, "Criação": 6, "Planos Plurianuais": 10,
-    "gratuito": 6, "gratuidade": 6, "regime fiscal": 9, "fundo financeiro": 8,
-    "metas de desempenho": 8, "natureza tributária": 10, "creditícia": 8,
-    "receita": 8, "despesa": 8, "fiscal": 10, "Lei Complementar nº 101": 14,
+    # NÚCLEO ESTRATÉGICO
+    "Gestão": 14, "Inovação": 14, "Serviços Públicos": 14,
+    "Administração Pública Federal": 12, "Governança": 10,
+    "Transformação do Estado": 12, "Modernização": 10,
+
+    # GOVERNO DIGITAL E TECNOLOGIA
+    "Governo Digital": 14, "Digitalização": 12, "Serviços Digitais": 12,
+    "Carteira de Identidade Nacional": 14, "CIN": 12, "Identificação Civil": 10,
+    "Infraestrutura Nacional de Dados": 10, "IND": 8, "Dados Abertos": 8,
+    "LGPD": 10, "Privacidade": 10, "Segurança da Informação": 10,
+    "Inteligência Artificial": 10, "TIC": 8, "Tecnologia da Informação": 8,
+    "SEI": 8, "Sistema Eletrônico de Informações": 8,
+    "Estratégia Federal de Governo Digital": 10, "Cidadania Digital": 8,
+
+    # CARGOS, FUNÇÕES E PESSOAS (CONGRESSO/LEIS)
+    "Servidor Público": 14, "Carreiras Transversais": 14, "Carreira": 12,
+    "Cargos Efetivos": 12, "Cargos em Comissão": 10, "Funções de Confiança": 10,
+    "Remuneração": 10, "Estrutura Remuneratória": 10, "Vencimento Básico": 8,
+    "Gratificações": 8, "Subsídio": 8, "Reestruturação de Carreiras": 12,
+    "Concurso Público Nacional Unificado": 14, "CNU": 12, "Concursos Públicos": 12,
+    "Lei 8.112": 10, "Estatuto do Servidor": 8, "Sigepe": 8,
+    "Gestão de Pessoas": 12, "Desenvolvimento de Pessoas": 10,
+    "Relações do Trabalho": 10, "Negociação Sindical": 8,
+    "Acumulação de Cargos": 8, "Agentes Públicos": 10,
+
+    # OUTRAS ÁREAS ESTRUTURANTES
+    "Patrimônio da União": 12, "SPU": 8, "Imóveis Funcionais": 6,
+    "Empresas Estatais": 10, "Governança Corporativa": 8, "SEST": 6,
+    "Compras Públicas Centralizadas": 12, "Contratações Públicas": 10, "Logística": 8,
+    "Enap": 8, "Capacitação": 8, "Funpresp-Exe": 6,
+    "Protocolo de Intenções": 6, "Convênios": 6, "Transferências da União": 6,
+    "Atos Normativos": 6, "Decretos": 6
 }
 PESOS_SMA = {
-    "Monitoramento": 6, "Monitorar": 2, "Avaliação": 6, "Avaliar": 2,
-    "CMAP": 10, "Demonstrativos": 5, "Revisão do Gasto": 10,
-    "Subsídios": 7, "Gasto Direto": 3, "Monitoramento e avaliação": 9,
-    "Conselho de Monitoramento e Avaliação de Políticas Públicas": 10,
+    # TÓPICOS CENTRAIS E ÓRGÃOS
+    "CMAP": 12, "Conselho de Monitoramento e Avaliação de Políticas Públicas": 12,
+    "Revisão do Gasto": 10, "Monitoramento e avaliação": 10,
+    
+    # PROCESSOS PRINCIPAIS
+    "Monitoramento": 8, "Avaliação": 8, "Monitorar": 4, "Avaliar": 4, 
+    
+    # INSTRUMENTOS E RESULTADOS
     "Estudo de monitoramento": 8, "Estudo de avaliação": 8,
-    "Monitoramento econômico": 7, "Monitoramento contábil": 7,
-    "Benefícios financeiros": 8, "Benefícios creditícios": 8,
-    "Benefícios tributários": 8, "Relatório de avaliação": 8,
-    "Relatório de monitoramento": 8,
+    "Relatório de monitoramento": 8, "Relatório de avaliação": 8,
+    "Demonstrativos": 6, 
+    
+    # SUBSÍDIOS E BENEFÍCIOS (Tópico de Revisão de Gasto)
+    "Subsídios": 10, 
+    "Benefícios tributários": 9, "Benefícios financeiros": 9, "Benefícios creditícios": 9,
+    
+    # TIPOS DE MONITORAMENTO
+    "Gasto Direto": 5, 
+    "Monitoramento econômico": 7, "Monitoramento contábil": 7, "Monitoramento financeiro": 7,
 }
+
+try:
+    import django  # type: ignore
+    from django.apps import apps as django_apps  # type: ignore
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "base_pl.settings")
+    if not django_apps.ready:  # type: ignore[attr-defined]
+        django.setup()  # type: ignore[attr-defined]
+    from pesos import services as pesos_services  # type: ignore
+
+    try:
+        _weights_map = pesos_services.load_all_weights()
+    except Exception as exc:  # pragma: no cover - defensivo
+        log.warning("Falha ao carregar pesos dinamicamente: %s", exc)
+    else:
+        if _weights_map.get("PESOS"):
+            PESOS = dict(_weights_map["PESOS"])
+        if _weights_map.get("PESOS_SMA"):
+            PESOS_SMA = dict(_weights_map["PESOS_SMA"])
+except Exception:  # pragma: no cover - ambiente sem Django
+    pass
 
 # ---------------------------------------------------------------------
 # Funções auxiliares (Câmara + compartilhadas)
@@ -537,6 +708,7 @@ def coletar_senado() -> pd.DataFrame:
 # ---------------------------------------------------------------------
 def main() -> pd.DataFrame:
     ini = time.time()
+    previous_df = load_dataset()
     df_cam = coletar_camara()
     df_sen = coletar_senado()
     df_final = pd.concat([df_cam, df_sen], ignore_index=True).apply(_xlsx_safe)
@@ -545,45 +717,52 @@ def main() -> pd.DataFrame:
     os.makedirs(TMP_DIR, exist_ok=True)
     df_final.to_excel(LOCAL_FILE, index=False, engine="openpyxl")
     log.info("💾 Salvo em %s", LOCAL_FILE)
+    df_final.to_csv(CSV_FILE, index=False)
+    log.info("💾 Salvo em %s", CSV_FILE)
 
-    bucket = storage_client.bucket(BUCKET_NAME)
-    blob = bucket.blob(GCS_PATH)
-    blob.upload_from_filename(
-        LOCAL_FILE,
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-    log.info("☁️ Enviado para gs://%s/%s", BUCKET_NAME, GCS_PATH)
+    novos_alertas = detect_status_changes(df_final, previous_df)
+    if not novos_alertas.empty:
+        existentes = load_alerts()
+        consolidados = pd.concat([novos_alertas, existentes], ignore_index=True)
+        consolidados = consolidados.drop_duplicates(
+            subset=["Casa", "Proposição", "Situação Atual"], keep="first"
+        )
+        consolidados = consolidados.sort_values(
+            by="Atualizado Em", ascending=False, kind="stable"
+        )
+        consolidados.to_csv(ALERTS_FILE, index=False)
+        log.info("🚨 %d novas alterações de situação registradas", len(novos_alertas))
+    else:
+        log.info("Nenhuma alteração de situação identificada.")
+
     log.info("⏱ Duração: %.1f s", time.time() - ini)
     return df_final
 
 # ---------------------------------------------------------------------
-# Download inicial para o Dash
+# Download inicial para o Dash (agora apenas lê o arquivo local)
 # ---------------------------------------------------------------------
 try:
-    bucket = storage_client.bucket(BUCKET_NAME)
-    blob = bucket.blob(GCS_PATH)
     os.makedirs(TMP_DIR, exist_ok=True)
-    blob.download_to_filename(LOCAL_FILE)
+    # Apenas para garantir que o arquivo exista para o refresh_data não falhar na primeira execução
+    if not os.path.exists(LOCAL_FILE):
+        pd.DataFrame().to_excel(LOCAL_FILE)
+    if not os.path.exists(CSV_FILE):
+        pd.DataFrame(columns=SELECTED_COLS).to_csv(CSV_FILE, index=False)
+    if not os.path.exists(ALERTS_FILE):
+        pd.DataFrame(columns=ALERT_COLUMNS).to_csv(ALERTS_FILE, index=False)
+    refresh_data()
 except Exception as exc:
-    log.warning("Não foi possível baixar XLSX inicial: %s", exc)
+    log.warning("Não foi possível ler o arquivo XLSX inicial: %s", exc)
 
-refresh_data()
 
-# Data de atualização – hora real do XLSX no GCS
-# # garante que sempre haja um objeto blob, mesmo se o download falhou
-blob = storage_client.bucket(BUCKET_NAME).blob(GCS_PATH)               # 🟢 INÍCIO
+# Data de atualização – prioriza CSV; fallback para XLSX
+dataset_path = CSV_FILE if os.path.exists(CSV_FILE) else LOCAL_FILE
 try:
-    blob.reload()                               # garante metadados atualizados
-    updated_dt = blob.updated                   # timezone-aware em UTC
-    update_date = updated_dt.astimezone(TZ)\
-        .strftime("%d/%m/%Y às %H:%M")
-except Exception:                               # fallback: carimbo do arquivo local
-    try:
-        mod_ts = os.path.getmtime(LOCAL_FILE)
-    except FileNotFoundError:
-        mod_ts = time.time()
-    update_date = datetime.fromtimestamp(mod_ts, tz=TZ)\
-        .strftime("%d/%m/%Y às %H:%M")
+    mod_ts = os.path.getmtime(dataset_path)
+except FileNotFoundError:
+    mod_ts = time.time()
+update_date = datetime.fromtimestamp(mod_ts, tz=TZ)\
+    .strftime("%d/%m/%Y às %H:%M")
 
 # ----------------------------------------------------------
 # 1.2) Definição das colunas do DataTable

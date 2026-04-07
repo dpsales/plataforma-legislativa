@@ -1,12 +1,74 @@
 {% extends "base.html" %}
 
-{% block title %}Sobre a Plataforma{% endblock %}
+{% block title %}Manual do Usuário{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="text-center mb-5">Sobre a Plataforma</h1>
-    <div class="content">
-        {{ manual_conteudo | safe }}
-    </div>
+<div class="container py-4">
+    <h1 class="text-center mb-5">Manual da Plataforma Legislativa</h1>
+
+    <section class="mb-5">
+        <h2 class="h4">Objetivo</h2>
+        <p>Este manual orienta o uso cotidiano da Plataforma Legislativa, descrevendo como acessar o portal, navegar pelos microservicos e localizar informacoes legislativas essenciais.</p>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Acesso Inicial</h2>
+        <ol>
+            <li>Acesse <code>http://localhost:8080</code> (ou a URL configurada pela sua equipe).</li>
+            <li>Informe credenciais cadastradas em <code>paginaInicial/users/users.json</code>.</li>
+            <li>Confirme o perfil selecionado (ex.: <code>admin</code>, <code>normal</code>, <code>viewer</code>). Ele define os cartoes visiveis e permissões extras.</li>
+        </ol>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Navegação do Portal</h2>
+        <ul>
+            <li><strong>Menu superior:</strong> Links para a pagina inicial, este manual e a documentacao tecnica.</li>
+            <li><strong>Cartoes do dashboard:</strong> Cada cartao direciona para um microservico hospedado na orquestracao Docker.</li>
+            <li><strong>Logout:</strong> Utilize o botao de saida para encerrar a sessao com seguranca.</li>
+        </ul>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Serviços Principais</h2>
+        <ul>
+            <li><strong>Informativo do Congresso:</strong> Panorama de proposicoes e votacoes em destaque.</li>
+            <li><strong>Agenda da Semana:</strong> Eventos legislativos programados, com data, horario e comissao responsavel.</li>
+            <li><strong>Requerimentos:</strong> Consulta unificada dos requerimentos da Camara e do Senado com filtros dinamicos.</li>
+            <li><strong>Materias em Tramitacao (Senado):</strong> Materias prontas para pauta ou em analise nas comissoes do Senado.</li>
+            <li><strong>Materias em Tramitacao (Camara):</strong> Proposicoes em andamento na Camara dos Deputados, com status atualizado.</li>
+            <li><strong>Materias Prioritarias:</strong> Lista curada pela equipe com proposicoes estrategicas.</li>
+            <li><strong>Busca Avancada em Proposicoes:</strong> Motor de busca com filtros por tema, autor, partido, situacao e palavra-chave.</li>
+        </ul>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Fluxos de Trabalho Sugeridos</h2>
+        <ol>
+            <li>Revise a Agenda da Semana no inicio do dia para antecipar eventos relevantes.</li>
+            <li>Verifique Requerimentos e Materias Prioritarias para alinhar pautas com a equipe.</li>
+            <li>Use a Busca Avancada quando precisar localizar proposicoes especificas.</li>
+            <li>Atualize suas notas internas ou planilhas conforme cada servico apresentar novas informacoes.</li>
+        </ol>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Perfis e Configuração</h2>
+        <p>Somente perfis com permissao <em>can_configure</em> conseguem acessar <code>/configuracao</code> para editar os cartoes exibidos. Ajuste os links com cautela e mantenha um backup das configuracoes atuais antes de alterar rotas ou rótulos.</p>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Boas Práticas</h2>
+        <ul>
+            <li>Atualize o portal regularmente para refletir novos requerimentos ou proposicoes prioritarias.</li>
+            <li>Registre feedbacks da equipe para evoluir filtros e dashboards.</li>
+            <li>Consulte a documentacao (<code>/documentacao</code>) para detalhes tecnicos e processos de deploy.</li>
+        </ul>
+    </section>
+
+    <section class="mb-5">
+        <h2 class="h4">Suporte</h2>
+        <p>Em caso de duvidas, contate o Nucleo de Inteligencia de Dados (Gabin/SEGES/MGI) ou abra issue no repositorio da Plataforma Legislativa.</p>
+    </section>
 </div>
 {% endblock %}
