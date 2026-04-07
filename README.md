@@ -206,16 +206,10 @@ kubectl get pods -n plataforma-legislativa
 
 ### **👥 Equipe Responsável**
 
-**Núcleo de Inteligencia de Dados** 
-
-**Gabin/SEGES/MGI**
-
-**Responsável Técnico**:
-
 **Equipe de Desenvolvimento**:
 
   - Mario dos Santos M. Valverde Neto ASPAR/MPO
-  - Daiana de Paula Sales GABIN/SEGES/MGI
+  - Daiana de Paula Sales CGINF/SEGES/MGI
 
 ### **📧 Contatos**
 
