@@ -26,4 +26,5 @@ RUN python manage.py collectstatic --noinput
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "3", "pagina_inicial.wsgi:application"]
+# Railway injects PORT via environment variable; default to 8080 for local testing
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 3 --timeout 120 --access-logfile - pagina_inicial.wsgi:application"]

@@ -3,8 +3,8 @@ builder = "DOCKERFILE"
 dockerfilePath = "paginaInicial/Dockerfile.railway"
 
 [deploy]
-startCommand = "sh -c 'gunicorn --bind 0.0.0.0:${PORT:-8080} --workers ${GUNICORN_WORKERS:-3} --timeout ${GUNICORN_TIMEOUT:-120} pagina_inicial.wsgi:application'"
+# startCommand removed - Dockerfile.railway CMD handles Gunicorn startup with $PORT support
 healthcheckPath = "/login"
-healthcheckTimeout = 180
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10

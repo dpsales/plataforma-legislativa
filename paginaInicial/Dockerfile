@@ -40,4 +40,5 @@ RUN cd /app && python manage.py collectstatic --noinput
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "3", "pagina_inicial.wsgi:application"]
+# Support both hardcoded 8080 (local) and Railway PORT environment variable
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 3 --timeout 120 --access-logfile - pagina_inicial.wsgi:application"]
