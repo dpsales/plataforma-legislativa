@@ -175,7 +175,7 @@ PAGINAS = [
     {"titulo": "Acompanhamento de Sanção e Veto (em construção)", "url": "", "roles": ("admin", "normal")},
 ]
 
-PORTAL_APP_BASE_URL = "http://127.0.0.1:8080"
+PORTAL_APP_BASE_URL = os.environ.get("PORTAL_APP_BASE_URL", "http://127.0.0.1:8080")
 
 
 def _with_app_base(path: str) -> str:

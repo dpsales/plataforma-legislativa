@@ -178,6 +178,31 @@ cp .env-sample .env
 docker-compose up -d
 ```
 
+### **🚆 Railway + Gunicorn (docker-compose)**
+
+Use o compose dedicado para iniciar o Django com `gunicorn` em modo produção:
+
+```bash
+docker compose -f docker-compose.railway.yml up --build
+```
+
+Variáveis recomendadas no Railway:
+
+```env
+SECRET_KEY=sua-chave-forte
+DEBUG=False
+ALLOWED_HOSTS=.up.railway.app
+CSRF_TRUSTED_ORIGINS=https://seu-servico.up.railway.app
+DATABASE_URL=postgres://...
+DATABASE_SSL_REQUIRE=true
+PORT=$PORT
+```
+
+### **🚆 Railway (railway.toml)**
+
+O repositório também inclui configuração pronta em `railway.toml`, com build por Dockerfile e start em Gunicorn na porta dinâmica do Railway.
+
+
 ### **☸️ Kubernetes**
 
 ```bash

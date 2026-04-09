@@ -1,0 +1,28 @@
+services:
+  web:
+    build:
+      context: ./paginaInicial
+      dockerfile: Dockerfile
+    image: plataforma-legislativa/pagina-inicial:railway
+    command:
+      - sh
+      - -c
+      - >-
+        gunicorn
+        --bind 0.0.0.0:${PORT:-8080}
+        --workers ${GUNICORN_WORKERS:-3}
+        --timeout ${GUNICORN_TIMEOUT:-120}
+        pagina_inicial.wsgi:application
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-change-me-on-railway}
+      DEBUG: ${DEBUG:-False}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      DATABASE_URL: ${DATABASE_URL:-}
+      DATABASE_SSL_REQUIRE: ${DATABASE_SSL_REQUIRE:-true}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
+      PORTAL_APP_BASE_URL: ${PORTAL_APP_BASE_URL:-}
+      PORT: ${PORT:-8080}
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    restart: unless-stopped
