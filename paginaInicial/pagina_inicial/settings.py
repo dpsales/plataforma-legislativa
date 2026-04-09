@@ -14,8 +14,11 @@ _allowed_hosts = os.environ.get("ALLOWED_HOSTS", "*")
 ALLOWED_HOSTS: List[str] = [host.strip() for host in _allowed_hosts.split(",") if host.strip()] or ["*"]
 
 # Railway domains: auto-add *.up.railway.app if not explicitly set
-if "*" not in ALLOWED_HOSTS and not any(".railway.app" in h for h in ALLOWED_HOSTS):
-    ALLOWED_HOSTS.extend([".up.railway.app", ".railway.app"])
+if "*" not in ALLOWED_HOSTS:
+    if not any(".railway.app" in h for h in ALLOWED_HOSTS):
+        ALLOWED_HOSTS.extend([".up.railway.app", ".railway.app"])
+    if not any(".railway.internal" in h for h in ALLOWED_HOSTS):
+        ALLOWED_HOSTS.append(".railway.internal")
 
 _csrf_origins_env = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
 _default_csrf_origins = [
