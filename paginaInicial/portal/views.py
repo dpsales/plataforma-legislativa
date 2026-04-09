@@ -4,11 +4,17 @@ from typing import Dict, List
 from urllib.parse import quote
 
 from django.conf import settings
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from .forms import LoginForm
+
+
+@require_http_methods(["GET"])
+def healthz_view(request):
+    return JsonResponse({"status": "ok"})
 
 
 def _is_authenticated(request) -> bool:
