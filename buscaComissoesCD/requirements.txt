@@ -4,6 +4,7 @@ whitenoise
 celery>=5.3
 redis>=4.5
 dj-database-url
+psycopg2-binary
 pandas
 xlsxwriter
 requests
