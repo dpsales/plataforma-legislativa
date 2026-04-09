@@ -1,3 +1,4 @@
+# Dockerfile dedicado ao Railway (build context na raiz do repositorio).
 FROM mirror.gcr.io/library/python:3-slim
 
 EXPOSE 8080

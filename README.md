@@ -186,6 +186,11 @@ Use o compose dedicado para iniciar o Django com `gunicorn` em modo produção:
 docker compose -f docker-compose.railway.yml up --build
 ```
 
+Observacao importante:
+- Este compose usa `context: ./paginaInicial` e `dockerfile: Dockerfile`.
+- No deploy do Railway com `railway.toml`, o build usa `paginaInicial/Dockerfile.railway`.
+- Isso evita erro de caminho do `entrypoint.sh` quando o contexto de build e a raiz do repositorio.
+
 Variáveis recomendadas no Railway:
 
 ```env
@@ -201,6 +206,10 @@ PORT=$PORT
 ### **🚆 Railway (railway.toml)**
 
 O repositório também inclui configuração pronta em `railway.toml`, com build por Dockerfile e start em Gunicorn na porta dinâmica do Railway.
+
+Resumo do padrao recomendado:
+- Railway: usar `railway.toml` com `dockerfilePath = "paginaInicial/Dockerfile.railway"`.
+- Execucao local via compose Railway: usar `docker-compose.railway.yml`.
 
 
 ### **☸️ Kubernetes**

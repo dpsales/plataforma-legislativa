@@ -1,3 +1,6 @@
+# Dockerfile principal do paginaInicial.
+# Pode ser usado localmente e tambem funciona com contexto da raiz.
+# Para deploy no Railway, o arquivo recomendado e paginaInicial/Dockerfile.railway.
 FROM mirror.gcr.io/library/python:3-slim
 
 EXPOSE 8080
@@ -25,6 +28,7 @@ RUN set -e; \
 	fi; \
 	cp "$APP_SRC/requirements.txt" /tmp/requirements.txt; \
 	python -m pip install --no-cache-dir -r /tmp/requirements.txt; \
+	python -m pip install --no-cache-dir "celery>=5.3,<6"; \
 	cp -a "$APP_SRC/." /app/; \
 	chmod +x /app/entrypoint.sh; \
 	adduser -u 5678 --disabled-password --gecos "" appuser; \
