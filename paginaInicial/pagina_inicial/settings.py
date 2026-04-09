@@ -205,15 +205,22 @@ def _with_app_base(path: str) -> str:
     return f"{PORTAL_APP_BASE_URL}{path}"
 
 
+def _service_url(env_var: str, fallback_path: str) -> str:
+    service_base = os.environ.get(env_var, "").strip().rstrip("/")
+    if service_base:
+        return service_base
+    return _with_app_base(fallback_path)
+
+
 REDIRECT_URLS = {
     "informativo": "/informativo/",
     "agenda": _with_app_base("/busca-eventos/"),
     "requerimentos": _with_app_base("/busca-reqs/"),
-    "comissoes_senado": _with_app_base("/busca-comissoes-sf/"),
-    "comissoes_mistas": _with_app_base("/busca-comissoes-mistas/"),
-    "comissoes_camara": _with_app_base("/busca-comissoes-cd/"),
-    "materias_prioritarias": _with_app_base("/busca-materias/"),
-    "busca_avancada": _with_app_base("/base-pl/"),
+    "comissoes_senado": _service_url("BUSCA_COMISSOES_SF_URL", "/busca-comissoes-sf/"),
+    "comissoes_mistas": _service_url("BUSCA_COMISSOES_MISTAS_URL", "/busca-comissoes-mistas/"),
+    "comissoes_camara": _service_url("BUSCA_COMISSOES_CD_URL", "/busca-comissoes-cd/"),
+    "materias_prioritarias": _service_url("BUSCA_MATERIAS_URL", "/busca-materias/"),
+    "busca_avancada": _service_url("BASE_PL_URL", "/base-pl/"),
     "busca_sei": _with_app_base("/busca-sei/"),
 }
 
