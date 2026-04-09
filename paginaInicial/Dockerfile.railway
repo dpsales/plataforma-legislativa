@@ -1,0 +1,28 @@
+FROM mirror.gcr.io/library/python:3-slim
+
+EXPOSE 8080
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DJANGO_SETTINGS_MODULE=pagina_inicial.settings
+
+WORKDIR /app
+
+# Railway builds from repository root, so we copy files from paginaInicial/ explicitly.
+COPY paginaInicial/requirements.txt /app/requirements.txt
+
+RUN python -m pip install --no-cache-dir -r /app/requirements.txt \
+    && python -m pip install --no-cache-dir "celery>=5.3,<6"
+
+COPY paginaInicial/ /app/
+
+RUN chmod +x /app/entrypoint.sh \
+    && adduser -u 5678 --disabled-password --gecos "" appuser \
+    && chown -R appuser /app
+USER appuser
+
+RUN python manage.py collectstatic --noinput
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "3", "pagina_inicial.wsgi:application"]
