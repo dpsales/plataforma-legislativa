@@ -15,7 +15,7 @@ ALLOWED_HOSTS: List[str] = [host.strip() for host in _allowed_hosts.split(",") i
 
 # Railway domains: auto-add *.up.railway.app if not explicitly set
 if "*" not in ALLOWED_HOSTS and not any(".railway.app" in h for h in ALLOWED_HOSTS):
-    ALLOWED_HOSTS.extend([".up.railway.app", "*.railway.app"])
+    ALLOWED_HOSTS.extend([".up.railway.app", ".railway.app"])
 
 _csrf_origins_env = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
 _default_csrf_origins = [
@@ -35,7 +35,11 @@ if not any(".railway.app" in origin for origin in _default_csrf_origins):
     ])
 
 CSRF_TRUSTED_ORIGINS = [
-    origin.rstrip("/")
+    (
+        origin.rstrip("/")
+        if origin.startswith(("http://", "https://"))
+        else f"https://{origin.rstrip('/')}"
+    )
     for origin in _default_csrf_origins
     if origin.strip()
 ]
