@@ -13,6 +13,10 @@ DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
 _allowed_hosts = os.environ.get("ALLOWED_HOSTS", "*")
 ALLOWED_HOSTS: List[str] = [host.strip() for host in _allowed_hosts.split(",") if host.strip()] or ["*"]
 
+# Railway domains: auto-add *.up.railway.app if not explicitly set
+if "*" not in ALLOWED_HOSTS and not any(".railway.app" in h for h in ALLOWED_HOSTS):
+    ALLOWED_HOSTS.extend([".up.railway.app", "*.railway.app"])
+
 _csrf_origins_env = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
 _default_csrf_origins = [
     "http://localhost",
@@ -22,6 +26,14 @@ _default_csrf_origins = [
 ]
 if _csrf_origins_env:
     _default_csrf_origins.extend(origin.strip() for origin in _csrf_origins_env.split(","))
+
+# Railway HTTPS support: auto-add *.up.railway.app origins
+if not any(".railway.app" in origin for origin in _default_csrf_origins):
+    _default_csrf_origins.extend([
+        "https://*.up.railway.app",
+        "https://plataforma-legislativa-production.up.railway.app",
+    ])
+
 CSRF_TRUSTED_ORIGINS = [
     origin.rstrip("/")
     for origin in _default_csrf_origins
@@ -198,12 +210,17 @@ REDIRECT_URLS = {
     "busca_sei": _with_app_base("/busca-sei/"),
 }
 
-# Celery Configuration
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "America/Sao_Paulo"
-CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+# Celery Configuration (optional; Railway may not have Redis)
+# Only configure if CELERY_BROKER_URL is explicitly set
+if os.environ.get("CELERY_BROKER_URL"):
+    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+    CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+    CELERY_ACCEPT_CONTENT = ["json"]
+    CELERY_TASK_SERIALIZER = "json"
+    CELERY_RESULT_SERIALIZER = "json"
+    CELERY_TIMEZONE = "America/Sao_Paulo"
+    CELERY_TASK_TRACK_STARTED = True
+    CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+else:
+    # Celery disabled when no broker is configured
+    pass
