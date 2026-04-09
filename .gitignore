@@ -5,11 +5,35 @@ __pycache__/
 *.log
 .env
 .DS_Store
+apresentacao
+auto_sei.py
+plataforma-legislativa-dry/
 
+
+Projeto para a Plataforma.docx
 buscaComissoesCD/data/*
-!buscaComissoesCD/data/.gitkeep
+buscaComissoesCD/data/.gitkeep
 buscaComissoesCD/staticfiles/
 (CD) Levantamento de Proposições 2025.xlsx
 20251113_Reunião_Betânia_Carlos_ASPAR.docx
 Pauta Legislativa Prioritária MGI_2025.xlsx
 Projetos MGI no Bloco de Posicionamento SEI.xlsx
+buscaReqs/proposicoesAutores_csv
+buscaReqs/GUIA_RAPIDO.md
+REFACTOR_SUMMARY.md
+REFACTOR_INSTRUCTIONS.md
+BRANCH_OVERVIEW.md
+IMPORTANT_DECISIONS.md
+IMPLEMENTATION_DETAILS.md
+INDEX_AGENDA_FEATURE.md
+QUICK_START.md
+AGENDA_FEATURE.md
+REFACTOR_INDIVIDUAL_MODULES.md
+REFACTOR_INDEX.md
+REFACTOR_DRY_MAPEAMENTO.md
+README_REFACTOR.md
+README_1.md
+MIGRATION_GUIDE.md
+INDEX_AGENDA_FEATURE.md
+IMPLEMENTATION_COMPLETE.md
+README_1.md

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Favorito Removido{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if deletado %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading">✅ Favorito removido!</h4>
+        <p>O favorito foi removido com sucesso.</p>
+        <a href="{% url 'agenda:semanal' %}" class="btn btn-primary btn-sm">
+            Voltar à Agenda
+        </a>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% else %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading">⚠️ Erro</h4>
+        <p>Não foi possível remover o favorito.</p>
+        <a href="{% url 'agenda:semanal' %}" class="btn btn-primary btn-sm">
+            Voltar à Agenda
+        </a>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

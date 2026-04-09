@@ -200,3 +200,39 @@ class ConfigurationForm(forms.Form):
         self.config.subjects = self.cleaned_data["subjects"]
         self.config.save()
         return self.config
+
+
+class UploadRequerimentosForm(forms.Form):
+    arquivo = forms.FileField(
+        label="Arquivo CSV ou Excel",
+        required=True,
+        widget=forms.ClearableFileInput(attrs={"class": "form-control"}),
+        help_text="Aceita .csv, .xlsx ou .xls.",
+    )
+    delimiter = forms.CharField(
+        label="Delimitador CSV",
+        required=False,
+        initial=";",
+        widget=forms.TextInput(attrs={"class": "form-control", "maxlength": 3}),
+        help_text="Usado apenas para CSV. Padrão: ;",
+    )
+    sheet = forms.CharField(
+        label="Aba do Excel",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        help_text="Nome da aba (opcional). Padrão: primeira aba.",
+    )
+    clear_before = forms.BooleanField(
+        label="Limpar dados antes de importar",
+        required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )
+
+    def clean_arquivo(self):
+        arquivo = self.cleaned_data.get("arquivo")
+        if not arquivo:
+            return arquivo
+        name = arquivo.name.lower()
+        if not (name.endswith(".csv") or name.endswith(".xlsx") or name.endswith(".xls")):
+            raise forms.ValidationError("Envie um arquivo .csv, .xlsx ou .xls")
+        return arquivo

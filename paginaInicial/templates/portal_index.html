@@ -32,6 +32,16 @@
                                 </div>
                             </div>
                         </a>
+                    {% elif pagina.url|slice:":4" == "http" %}
+                        <!-- Abre em nova aba para apps em outro host/porta -->
+                        <a href="{{ pagina.url }}" target="_blank" class="text-decoration-none">
+                            <div class="card clickable-card active-app">
+                                <div class="card-body">
+                                    <i class="fa-solid fa-folder-open fa-2x mb-2"></i>
+                                    <h5 class="card-title">{{ pagina.titulo }}</h5>
+                                </div>
+                            </div>
+                        </a>
                     {% else %}
                         <!-- Carrega a aplicação no iframe -->
                         {% if '?' in pagina.url %}

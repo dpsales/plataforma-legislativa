@@ -158,6 +158,12 @@ services:
     build:
       context: ./basePL
       dockerfile: Dockerfile
+<<<<<<< Updated upstream
+    image: gcr.io/nome-do-repo/base-pl:latest
+    depends_on:
+      - paginaInicial
+    
+=======
     image: gcr.io/plataforma-legislativa/base-pl:web
     environment:
       - DJANGO_ALLOWED_HOSTS=*
@@ -182,6 +188,20 @@ services:
     ports:
       - "8017:8080"
 
+  buscasei:
+    build:
+      context: ./buscaSei
+      dockerfile: Dockerfile
+    image: gcr.io/plataforma-legislativa/busca-sei:web
+    environment:
+      - DJANGO_ALLOWED_HOSTS=*
+      - DJANGO_USE_X_FORWARDED_HOST=true
+      - DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:8080
+    volumes:
+      - ./buscaSei/data:/app/data
+    ports:
+      - "8018:8080"
+
   paginaInicial:
     build:
       context: ./paginaInicial
@@ -195,3 +215,4 @@ services:
       - RUN_MIGRATIONS=${PAGINA_INICIAL_RUN_MIGRATIONS:-1}
     volumes:
       - ./database:/app/database
+>>>>>>> Stashed changes

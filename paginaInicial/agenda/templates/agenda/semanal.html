@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Agenda Legislativa - Semana Anterior{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Cabeçalho -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="text-primary">
+                <i class="fas fa-calendar"></i> Agenda Legislativa
+            </h1>
+            <p class="text-muted">Semana de {{ data_inicio|date:"d/m" }} a {{ data_fim|date:"d/m/Y" }}</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-sm btn-outline-primary" onclick="sincronizarAgenda()">
+                <i class="fas fa-sync"></i> Atualizar
+            </button>
+        </div>
+    </div>
+
+    {% if mensagem %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ mensagem }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">🔍 Filtros</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Casa</label>
+                    <select name="casa" class="form-control">
+                        <option value="">Todas</option>
+                        <option value="Câmara" {% if request.GET.casa == 'Câmara' %}selected{% endif %}>Câmara</option>
+                        <option value="Senado" {% if request.GET.casa == 'Senado' %}selected{% endif %}>Senado</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tipo</label>
+                    <select name="tipo" class="form-control">
+                        <option value="">Todos</option>
+                        {% for value, label in tipos %}
+                            <option value="{{ value }}" {% if request.GET.tipo == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Comissão</label>
+                    <input type="text" name="comissao" class="form-control" 
+                           placeholder="Buscar comissão..." value="{{ request.GET.comissao }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-danger">{{ total_camara }}</h3>
+                    <p class="text-muted">Eventos Câmara</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">{{ total_senado }}</h3>
+                    <p class="text-muted">Eventos Senado</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">{{ total_atualizacoes }}</h3>
+                    <p class="text-muted">Atualizações de Proposições</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Eventos Câmara -->
+    {% if eventos_camara %}
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">📍 Eventos Câmara dos Deputados ({{ total_camara }})</h5>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                {% for evento in eventos_camara %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">
+                                    <span class="badge bg-danger">{{ evento.get_tipo_display }}</span>
+                                    {{ evento.titulo }}
+                                </h6>
+                                <p class="mb-1 text-muted">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ evento.data_evento|date:"l, d/m/Y" }}
+                                    {% if evento.hora_inicio %}
+                                        às {{ evento.hora_inicio|time:"H:i" }}
+                                    {% endif %}
+                                </p>
+                                {% if evento.local %}
+                                    <p class="mb-0 text-muted">
+                                        <i class="fas fa-map-marker-alt"></i> {{ evento.local }}
+                                    </p>
+                                {% endif %}
+                                {% if evento.descricao %}
+                                    <p class="mb-0">{{ evento.descricao|truncatewords:20 }}</p>
+                                {% endif %}
+                            </div>
+                            {% if evento.url_evento %}
+                                <a href="{{ evento.url_evento }}" target="_blank" class="btn btn-sm btn-outline-danger">
+                                    Ver detalhes
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Eventos Senado -->
+    {% if eventos_senado %}
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">📍 Eventos Senado Federal ({{ total_senado }})</h5>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                {% for evento in eventos_senado %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">
+                                    <span class="badge bg-info">{{ evento.get_tipo_display }}</span>
+                                    {{ evento.titulo }}
+                                </h6>
+                                <p class="mb-1 text-muted">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ evento.data_evento|date:"l, d/m/Y" }}
+                                    {% if evento.hora_inicio %}
+                                        às {{ evento.hora_inicio|time:"H:i" }}
+                                    {% endif %}
+                                </p>
+                                {% if evento.comissao %}
+                                    <p class="mb-0 text-muted">
+                                        <i class="fas fa-users"></i> {{ evento.comissao }}
+                                    </p>
+                                {% endif %}
+                                {% if evento.local %}
+                                    <p class="mb-0 text-muted">
+                                        <i class="fas fa-map-marker-alt"></i> {{ evento.local }}
+                                    </p>
+                                {% endif %}
+                                {% if evento.descricao %}
+                                    <p class="mb-0">{{ evento.descricao|truncatewords:20 }}</p>
+                                {% endif %}
+                            </div>
+                            {% if evento.url_transmissao %}
+                                <a href="{{ evento.url_transmissao }}" target="_blank" 
+                                   class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-video"></i> Transmissão
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Atualizações de Proposições -->
+    {% if atualizacoes %}
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">📋 Atualizações de Proposições Monitoradas ({{ total_atualizacoes }})</h5>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                {% for atualizacao in atualizacoes %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">
+                                    <code>{{ atualizacao.codigo_material }}</code>
+                                    <span class="badge bg-success">{{ atualizacao.get_tipo_display }}</span>
+                                </h6>
+                                <p class="mb-1">{{ atualizacao.descricao }}</p>
+                                <small class="text-muted">
+                                    {{ atualizacao.data_atualizacao|date:"d/m/Y H:i" }} 
+                                    • Origem: {{ atualizacao.get_origem_display }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not eventos_camara and not eventos_senado and not atualizacoes %}
+        <div class="alert alert-info" role="alert">
+            <i class="fas fa-info-circle"></i>
+            Nenhum evento ou atualização durante este período.
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- Scripts -->
+<script>
+function sincronizarAgenda() {
+    if (!confirm('Sincronizar dados da Câmara e Senado? Isso pode levar alguns segundos...')) {
+        return;
+    }
+    
+    // Criar formulário e submeter para sincronizar
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.innerHTML = `
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <input type="hidden" name="acao" value="sincronizar_camara">
+    `;
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+{% endblock %}

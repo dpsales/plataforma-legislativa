@@ -1,0 +1,18 @@
+# Dependencies for Agenda Feature
+# Add these to paginaInicial/requirements.txt
+
+# HTTP requests for APIs
+requests>=2.28.0
+
+# Data parsing (CSV)
+pandas>=1.5.0
+
+# Task queue
+celery>=5.2.0
+
+# Celery Broker
+redis>=4.3.0
+
+# Already installed but explicit:
+# Django==5.1.1 (from main requirements)
+# djangorestframework (optional, for future API endpoint)

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "portal",
+    "agenda",
 ]
 
 MIDDLEWARE = [
@@ -167,19 +168,42 @@ PAGINAS = [
     {"titulo": "Matérias em Tramitação nas Comissões (Câmara)", "url": "/redirect/comissoes_camara", "roles": ALL_PROFILES},
     {"titulo": "Matérias Prioritárias", "url": "/redirect/materias_prioritarias", "roles": ALL_PROFILES},
     {"titulo": "Busca Avançada em Proposições", "url": "/redirect/busca_avancada", "roles": ALL_PROFILES},
+    {"titulo": "Busca de Processos SEI", "url": "/redirect/busca_sei", "roles": ("admin", "normal")},
     {"titulo": "Nuvem de Palavras (em construção)", "url": "", "roles": ("admin", "normal")},
     {"titulo": "Análise de Votações (em construção)", "url": "", "roles": ("admin", "normal")},
     {"titulo": "Classificação Automatizada de Proposições (em construção)", "url": "", "roles": ("admin", "normal")},
     {"titulo": "Acompanhamento de Sanção e Veto (em construção)", "url": "", "roles": ("admin", "normal")},
 ]
 
+PORTAL_APP_BASE_URL = "http://127.0.0.1:8080"
+
+
+def _with_app_base(path: str) -> str:
+    if not PORTAL_APP_BASE_URL:
+        return path
+    if not path.startswith("/"):
+        return f"{PORTAL_APP_BASE_URL}/{path}"
+    return f"{PORTAL_APP_BASE_URL}{path}"
+
+
 REDIRECT_URLS = {
     "informativo": "/informativo/",
-    "agenda": "/busca-eventos/",
-    "requerimentos": "/busca-reqs/",
-    "comissoes_senado": "/busca-comissoes-sf/",
-    "comissoes_mistas": "/busca-comissoes-mistas/",
-    "comissoes_camara": "/busca-comissoes-cd/",
-    "materias_prioritarias": "/busca-materias/",
-    "busca_avancada": "/base-pl/",
+    "agenda": _with_app_base("/busca-eventos/"),
+    "requerimentos": _with_app_base("/busca-reqs/"),
+    "comissoes_senado": _with_app_base("/busca-comissoes-sf/"),
+    "comissoes_mistas": _with_app_base("/busca-comissoes-mistas/"),
+    "comissoes_camara": _with_app_base("/busca-comissoes-cd/"),
+    "materias_prioritarias": _with_app_base("/busca-materias/"),
+    "busca_avancada": _with_app_base("/base-pl/"),
+    "busca_sei": _with_app_base("/busca-sei/"),
 }
+
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "America/Sao_Paulo"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes

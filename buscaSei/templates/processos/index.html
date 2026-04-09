@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Busca de Processos SEI{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-search"></i> Buscar Processo SEI
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="formBusca">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.numero_processo.id_for_label }}" class="form-label">
+                                {{ form.numero_processo.label }}
+                            </label>
+                            {{ form.numero_processo }}
+                            {% if form.numero_processo.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.numero_processo.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.include_documentos }}
+                            <label class="form-check-label" for="{{ form.include_documentos.id_for_label }}">
+                                {{ form.include_documentos.label }}
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-search"></i> Buscar Processo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Processos recentes -->
+            {% if ultimos_processos %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Processos Consultados Recentemente</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Número do Processo</th>
+                                <th>Assunto</th>
+                                <th>Status</th>
+                                <th>Data Consulta</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for processo in ultimos_processos %}
+                            <tr>
+                                <td><strong>{{ processo.numero_processo }}</strong></td>
+                                <td>{{ processo.assunto|default:"---" }}</td>
+                                <td>
+                                    {% if processo.status == 'Processado' %}
+                                        <span class="badge bg-success">{{ processo.status }}</span>
+                                    {% elif processo.status == 'Processando' %}
+                                        <span class="badge bg-warning">{{ processo.status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ processo.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ processo.data_consulta|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'processos:detalhe' processo.id %}" class="btn btn-sm btn-outline-primary">
+                                        Detalhes
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .clickable-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .clickable-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}

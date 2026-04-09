@@ -1,0 +1,9 @@
+django==5.1.1
+gunicorn
+dj-database-url
+whitenoise
+requests
+pandas
+selenium
+webdriver-manager
+lxml
